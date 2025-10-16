@@ -100,13 +100,13 @@ namespace EmpleadosMorados.Controller
                 // ----------------------------------------------------------------------
                 // 3. Registrar el empleado (Inserción Atómica en Mongo)
                 _logger.Info($"Iniciando registro para {empleado.Nombre} en Mongo...");
-                int idGenerado = await _empleadosData.InsertarEmpleadoAsync(empleado);
+                String idGenerado = await _empleadosData.InsertarEmpleadoAsync(empleado);
 
-                if (idGenerado > 0)
+                if (idGenerado.Length > 0)
                 {
-                    return (idGenerado, "Empleado registrado exitosamente.");
+                    return (0, "Empleado registrado exitosamente.");
                 }
-                else if (idGenerado == -1)
+                else if (idGenerado.Length == -1)
                 {
                     return (-1, "Fallo en el registro: Dato duplicado (CURP, RFC, Teléfono o Correo).");
                 }

@@ -1,6 +1,4 @@
 ﻿// Data/EmpleadosDataAccess.cs
-using System;
-using System.Threading.Tasks;
 using EmpleadosMorados.Model;
 using NLog;
 
@@ -20,9 +18,9 @@ namespace EmpleadosMorados.Data
         }
 
         // El método de alta DEBE ser asíncrono
-        public async Task<int> InsertarEmpleadoAsync(Empleado empleado)
+        public async Task<String> InsertarEmpleadoAsync(Empleado empleado)
         {
-            if (empleado == null) return -1;
+            //if (empleado == null) return -1;
 
             _logger.Info($"Iniciando inserción de Empleado en MongoDB...");
 
@@ -30,9 +28,9 @@ namespace EmpleadosMorados.Data
             // La lógica de TRAY_LAB ahora está incrustada en el objeto Empleado (Model/Empleado.cs).
 
             // Llama al método real de inserción en MongoDBDataAccess
-            int idGenerado = await _mongoData.InsertarUsuarioAsync(empleado);
+            String idGenerado = await _mongoData.InsertarUsuarioAsync(empleado);
 
-            if (idGenerado > 0)
+            if (idGenerado.Length> 0)
             {
                 _logger.Info($"Empleado insertado exitosamente con ID: {idGenerado}");
             }
@@ -40,6 +38,7 @@ namespace EmpleadosMorados.Data
             {
                 _logger.Error("Fallo al insertar el empleado en MongoDB.");
             }
+            Console.WriteLine($"✅ ID generado y listo para insertar: {idGenerado}");
             return idGenerado;
         }
 

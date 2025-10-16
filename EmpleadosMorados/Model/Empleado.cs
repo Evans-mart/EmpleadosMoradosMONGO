@@ -8,8 +8,8 @@ public class Empleado
 {
     // ⚠️ CRÍTICO: ID de MongoDB. Es entero en tus datos, así que forzamos el mapeo.
     [BsonId]
-    [BsonElement("_id")] // Mapeo explícito al nombre de campo de Mongo
-    public int Id { get; set; }
+    [BsonRepresentation(BsonType.ObjectId)] // CRÍTICO: Mapea el ObjectId de Mongo a un string en C#
+    public string Id { get; set; }
 
     // DATOS PLANOS (Vienen de tu antigua clase Persona)
     [BsonElement("nombre")]

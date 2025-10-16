@@ -1,10 +1,10 @@
 ﻿// Data/MongoDBDataAccess.cs (CORREGIDA y AMPLIADA)
 using System;
+using System.Collections.Generic; // Para List<KeyValuePair>
 using System.Threading.Tasks;
 using EmpleadosMorados.Model;
 using MongoDB.Driver;
 using NLog;
-using System.Collections.Generic; // Para List<KeyValuePair>
 
 namespace EmpleadosMorados.Data
 {
@@ -23,42 +23,55 @@ namespace EmpleadosMorados.Data
         // ... [El método InsertarUsuarioAsync y GetNextSequenceIdAsync están correctos, los omito por espacio]
 
         // Método auxiliar para obtener el ID secuencial (Necesario si usas _id: 1, 2, 3, ...)
-        private async Task<int> GetNextSequenceIdAsync(string collectionName)
-        {
-            // 1. Definir el orden descendente por Id
-            var sort = Builders<Empleado>.Sort.Descending(e => e.Id);
+        //private async Task<int> GetNextSequenceIdAsync()
+        //{
+        //    try
+        //    {
+        //        // 🔹 Usa la colección correcta (Empleados)
+        //        var sort = Builders<Empleado>.Sort.Descending(e => e.Id);
 
-            // 2. Buscar el último usuario
-            var lastUser = await _context.Usuarios
-                .Find(_ => true) // Encuentra todos los documentos
-                .Sort(sort)
-                .Limit(1)
-                .FirstOrDefaultAsync(); // Obtiene el primero (el de mayor ID)
+        //        var lastEmpleado = await _context.Usuarios
+        //            .Find(FilterDefinition<Empleado>.Empty)
+        //            .Sort(sort)
+        //            .Limit(1)
+        //            .FirstOrDefaultAsync();
 
-            // ⚠️ CORRECCIÓN CLAVE: Devolver 1 si no hay documentos.
-            // Esto asegura que la inserción empiece con _id: 1 si la colección está vacía.
-            return (lastUser != null) ? lastUser.Id + 1 : 1;
-        }
+        //        // 🔹 Si existe, suma 1; si no, empieza en 1
+        //        int nextId = lastEmpleado != null ? lastEmpleado.Id + 1 : 1;
 
-        public async Task<int> InsertarUsuarioAsync(Empleado nuevoEmpleado)
+        //        Console.WriteLine($"➡️ Próximo ID generado: {nextId}");
+        //        return nextId;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"❌ Error en GetNextSequenceIdAsync: {ex.Message}");
+        //        _logger.Error(ex, "Error al obtener el siguiente ID secuencial en empleados.");
+        //        return -2;
+        //    }
+        //}
+
+        public async Task<string> InsertarUsuarioAsync(Empleado nuevoEmpleado)
         {
             try
             {
-                // ⚠️ Asegurar que el Id se asigna ANTES de InsertOneAsync
-                int nextId = await GetNextSequenceIdAsync("usuarios");
-                nuevoEmpleado.Id = nextId;
-
+                // 1. Ya no se calcula el ID. Simplemente insertamos el objeto.
+                //    MongoDB generará el _id automáticamente en este paso.
                 await _context.Usuarios.InsertOneAsync(nuevoEmpleado);
 
-                // ... (Manejo de éxito)
+                // 2. Después de la inserción, el driver de C# actualiza automáticamente
+                //    el objeto 'nuevoEmpleado' con el ID que se acaba de generar.
                 return nuevoEmpleado.Id;
             }
-            // ... (Manejo de catch -1 y -2)
+            catch (MongoWriteException ex) when (ex.WriteError.Category == ServerErrorCategory.DuplicateKey)
+            {
+                // Error específico si se viola un índice único (CURP, RFC, etc.)
+                _logger.Error(ex, "Error de clave duplicada al insertar usuario.");
+                return null; // O un string vacío, para indicar el fallo
+            }
             catch (Exception ex)
             {
-                // La excepción está siendo capturada aquí, pero necesitamos que devuelva -2.
                 _logger.Error(ex, "Error general al insertar usuario en MongoDB");
-                return -2; // Devuelve -2 a EmpleadosController
+                return null; // O un string vacío
             }
         }
 
