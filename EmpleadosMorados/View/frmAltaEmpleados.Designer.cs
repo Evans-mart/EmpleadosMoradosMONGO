@@ -942,7 +942,6 @@
         }
 
         #endregion
-        private FontAwesome.Sharp.IconButton btnEmpleadoAPI;
         private Panel panelBar;
         private FontAwesome.Sharp.IconButton btnDeleteEmpleado;
         private FontAwesome.Sharp.IconButton btnUpdateEmpleado;

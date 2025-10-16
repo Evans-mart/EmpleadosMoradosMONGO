@@ -66,12 +66,21 @@ namespace EmpleadosMorados.Controller
                 {
                     return (-1, "Departamento o Puesto no encontrado en los catálogos.");
                 }
+                // ⚠️ CORRECCIÓN CLAVE: Asegurar que el objeto Departamento exista
+                if (empleado.PuestoActual.Departamento == null)
+                {
+                    empleado.PuestoActual.Departamento = new Departamento();
+                }
 
-                // Construcción del PuestoActual anidado
+                // ⚠️ MODIFICACIÓN DEL BLOQUE: Rellena el objeto PuestoActual ya existente
                 empleado.PuestoActual.Id_Puesto = puesto.Id_Puesto;
                 empleado.PuestoActual.Nombre_Puesto = puesto.Nom_Puesto;
                 empleado.PuestoActual.Departamento.Id_Depto = depto.Id_Depto;
                 empleado.PuestoActual.Departamento.Nombre_Depto = depto.Nombre_Depto;
+
+
+                // ----------------------------------------------------------------------
+
 
                 // d) Domicilio (Denormalización Anidada)
                 Municipio municipioCat = await _mongoData.GetMunicipioByIdAsync(idMunicipio);
@@ -82,16 +91,13 @@ namespace EmpleadosMorados.Controller
                     return (-1, "Estado o Municipio no encontrado en los catálogos geográficos.");
                 }
 
-                // Reconstrucción del Domicilio anidado (Modelo de la base de datos)
+                // ⚠️ MODIFICACIÓN DEL BLOQUE: Rellena los objetos Municipio y Estado ya existentes
                 empleado.Domicilio.Municipio.Id_Municipio = municipioCat.Id_Municipio;
-
-                // ⚠️ CORRECCIÓN CLAVE: Usar Nom_Municipio del modelo de catálogo
                 empleado.Domicilio.Municipio.Nombre_Municipio = municipioCat.Nom_Municipio;
-
                 empleado.Domicilio.Municipio.Estado.Id_Estado = estadoCat.Id_Estado;
                 empleado.Domicilio.Municipio.Estado.Nombre_Estado = estadoCat.Nombre_Estado;
                 empleado.Domicilio.Municipio.Estado.Pais = estadoCat.Pais;
-
+                // ----------------------------------------------------------------------
                 // 3. Registrar el empleado (Inserción Atómica en Mongo)
                 _logger.Info($"Iniciando registro para {empleado.Nombre} en Mongo...");
                 int idGenerado = await _empleadosData.InsertarEmpleadoAsync(empleado);

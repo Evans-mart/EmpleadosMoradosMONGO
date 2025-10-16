@@ -65,35 +65,44 @@ namespace EmpleadosMorados.Data
 
         public async Task<List<KeyValuePair<string, string>>> ObtenerDepartamentosActivosAsync()
         {
-            // Mapea la colección 'departamentos' a KeyValuePair<string, string>
-            var departamentos = await _context.Departamentos
+            // ⚠️ CORRECCIÓN CLAVE: 1. Leer los documentos completos (sin Project)
+            var documentos = await _context.Departamentos
                 .Find(d => d.Estatus == "ACTIVO")
-                // Nombre_Depto es el campo correcto para la proyección según tu DDL
-                .Project(d => new KeyValuePair<string, string>(d.Id_Depto, d.Nombre_Depto))
                 .ToListAsync();
+
+            // 2. Convertir en memoria a KeyValuePair usando LINQ
+            var departamentos = documentos.Select(d =>
+                new KeyValuePair<string, string>(d.Id_Depto, d.Nombre_Depto))
+                .ToList();
 
             return departamentos;
         }
 
         public async Task<List<KeyValuePair<string, string>>> ObtenerEstadosActivosAsync()
         {
-            // ⚠️ CRÍTICO: La clase Estado.cs mapea el nombre a Nombre_Estado
-            var estados = await _context.CatEstados
+            // 1. Leer documentos completos
+            var documentos = await _context.CatEstados
                 .Find(e => e.Estatus == "ACTIVO")
-                .Project(e => new KeyValuePair<string, string>(e.Id_Estado, e.Nombre_Estado))
                 .ToListAsync();
+
+            // 2. Convertir en memoria
+            var estados = documentos.Select(e =>
+                new KeyValuePair<string, string>(e.Id_Estado, e.Nombre_Estado))
+                .ToList();
 
             return estados;
         }
-
         public async Task<List<KeyValuePair<string, string>>> ObtenerMunicipiosPorEstadoAsync(string idEstado)
         {
-            // Mapea la colección 'cat_municipios' a KeyValuePair<string, string>
-            var municipios = await _context.CatMunicipios
+            // 1. Leer documentos completos
+            var documentos = await _context.CatMunicipios
                 .Find(m => m.Id_Estado == idEstado && m.Estatus == "ACTIVO")
-                // La clase Municipio.cs mapea el nombre a Nom_Municipio.
-                .Project(m => new KeyValuePair<string, string>(m.Id_Municipio, m.Nom_Municipio))
                 .ToListAsync();
+
+            // 2. Convertir en memoria (usando Nom_Municipio)
+            var municipios = documentos.Select(m =>
+                new KeyValuePair<string, string>(m.Id_Municipio, m.Nom_Municipio))
+                .ToList();
 
             return municipios;
         }

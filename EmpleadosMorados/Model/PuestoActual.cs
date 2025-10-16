@@ -1,4 +1,4 @@
-﻿// Model/PuestoActual.cs
+﻿// Model/PuestoActual.cs (Revisión de Mapeo)
 using MongoDB.Bson.Serialization.Attributes;
 namespace EmpleadosMorados.Model;
 public class PuestoActual
@@ -9,12 +9,14 @@ public class PuestoActual
     [BsonElement("nombre_puesto")]
     public string Nombre_Puesto { get; set; }
 
-    // ¡CRÍTICO: INCORPORACIÓN DEL SUB-DOCUMENTO!
+    // El error indica que el subdocumento DEPARTAMENTO falló. 
+    // Mantenemos la estructura de anidamiento correcta.
     [BsonElement("departamento")]
     public Departamento Departamento { get; set; }
 
     public PuestoActual()
     {
-        Departamento = new Departamento(); // Inicialización
+        // 🚨 CRÍTICO: El constructor debe inicializar el sub-documento.
+        Departamento = new Departamento();
     }
 }

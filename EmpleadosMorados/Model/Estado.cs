@@ -4,14 +4,13 @@ namespace EmpleadosMorados.Model;
 
 public class Estado
 {
-    // ⚠️ CRÍTICO: Mapeo del ID de la colección 'cat_estados'
-    [BsonId] // Indica que este campo es el _id primario de la colección
+    // ⚠️ CRÍTICO: Aseguramos mapeo a _id para la colección de catálogo.
+    [BsonId]
     [BsonElement("_id")]
-    public string Id_Estado { get; set; } // Mapea el ID de catálogo ("01", "02", etc.)
+    public string Id_Estado { get; set; }
 
-    // ⚠️ CRÍTICO: El nombre en la colección de catálogo es 'nom_estado'
     [BsonElement("nom_estado")]
-    public string Nombre_Estado { get; set; } // Lo usas como "Value" en el ComboBox
+    public string Nombre_Estado { get; set; }// Lo usas como "Value" en el ComboBox
 
     [BsonElement("pais")]
     public string Pais { get; set; }

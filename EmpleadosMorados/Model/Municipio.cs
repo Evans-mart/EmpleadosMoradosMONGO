@@ -1,14 +1,15 @@
 ﻿// Model/Municipio.cs (CORREGIDA)
 using EmpleadosMorados.Model;
 using MongoDB.Bson.Serialization.Attributes;
-
+namespace EmpleadosMorados.Model;
 public class Municipio
 {
-    // Campos del Documento de Catálogo (para la colección cat_municipios)
-    [BsonElement("_id")] // El _id de la colección cat_municipios
+    // ⚠️ CRÍTICO: Aseguramos mapeo a _id para la colección de catálogo.
+    [BsonId]
+    [BsonElement("_id")]
     public string Id_Municipio { get; set; }
 
-    [BsonElement("nom_municipio")] // Nombre de la colección de catálogo
+    [BsonElement("nom_municipio")]
     public string Nom_Municipio { get; set; } // 👈 Corrección: Usamos Nom_Municipio para el catálogo
 
     [BsonElement("id_estado")] // 👈 ¡Campo Faltante!
