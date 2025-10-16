@@ -1,77 +1,61 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using System;
+using System.Collections.Generic; // Necesario para List<Correo>
 
-namespace EmpleadosMorados.Model
+namespace EmpleadosMorados.Model;
+public class Empleado
 {
-    public class Empleado
+    // ⚠️ CRÍTICO: ID de MongoDB. Es entero en tus datos, así que forzamos el mapeo.
+    [BsonId]
+    [BsonElement("_id")] // Mapeo explícito al nombre de campo de Mongo
+    public int Id { get; set; }
+
+    // DATOS PLANOS (Vienen de tu antigua clase Persona)
+    [BsonElement("nombre")]
+    public string Nombre { get; set; }
+    [BsonElement("apellido_pat")]
+    public string ApellidoPaterno { get; set; }
+    [BsonElement("apellido_mat")]
+    public string ApellidoMaterno { get; set; }
+    [BsonElement("curp")]
+    public string Curp { get; set; }
+    [BsonElement("rfc")]
+    public string Rfc { get; set; }
+    [BsonElement("telefono")]
+    public long Telefono { get; set; } // Lo ponemos como long para que mapee el número de Mongo
+    [BsonElement("sexo")]
+    public string Sexo { get; set; }
+    [BsonElement("estatus")]
+    public string Estatus { get; set; }
+
+    // PROPIEDADES LABORALES
+    // NOTA: Los campos Puesto, Sueldo, etc. que tenías en Empleado
+    // se han FUSIONADO en el objeto PuestoActual, que es una mejor práctica en Mongo.
+    // Solo dejamos los campos que no están incrustados:
+    public int IdPersona { get; set; } // Propiedad que ya no se necesita en Mongo
+    public DateTime FechaIngreso { get; set; } // Ya está en TrayectoriaLaboral
+
+    // 🚀 INCORPORACIONES DE SUB-DOCUMENTOS (EMBEDDING) 🚀
+
+    [BsonElement("trayectoria_laboral")]
+    public TrayectoriaLaboral TrayectoriaLaboral { get; set; }
+
+    [BsonElement("puesto_actual")]
+    public PuestoActual PuestoActual { get; set; }
+
+    [BsonElement("correos")]
+    public List<Correo> Correos { get; set; } = new List<Correo>();
+
+    [BsonElement("domicilio")]
+    public Domicilio Domicilio { get; set; }
+
+    // Constructor por defecto
+    public Empleado()
     {
-        public int Id { get; set; } // ID de la tabla TRAY_LAB (o IdPersona si no tiene un PK propio)
-        public int IdPersona { get; set; } // NUMERO_USUARIO de la tabla USUARIOS
-        public DateTime FechaIngreso { get; set; } // FECHA_ALTA en TRAY_LAB
-
-        // Asumiendo que estos campos son requeridos por el sistema, aunque no están explícitamente en TRAY_LAB DDL.
-        public string Matricula { get; set; }
-        public string Puesto { get; set; }
-        public decimal Sueldo { get; set; }
-        public string TipoContrato { get; set; }
-        public bool SalarioFijo { get; set; }
-        public DateTime? FechaBaja { get; set; }
-
-        // Propiedades de acceso directo para datos clave
-        public string IdDepartamento => DatosPersonales?.IdDepartamento;
-        public string Estatus => DatosPersonales?.Estatus;
-
-        public Persona DatosPersonales { get; set; }
-
-        // Constructor por defecto
-        public Empleado()
-        {
-            DatosPersonales = new Persona();
-            FechaIngreso = DateTime.Now;
-        }
-
-        // Constructor con campos mínimos laborales (FechaIngreso, DatosPersonales)
-        public Empleado(DateTime fechaIngreso, Persona datosPersonales)
-        {
-            FechaIngreso = fechaIngreso;
-            DatosPersonales = datosPersonales;
-            Matricula = string.Empty;
-            Puesto = string.Empty;
-            Sueldo = 0.00m;
-            TipoContrato = "INDEFINIDO";
-            SalarioFijo = true;
-        }
-
-        // Constructor básico (Incluye datos laborales clave)
-        public Empleado(DateTime fechaIngreso, string matricula, string puesto, decimal sueldo, string tipoContrato, Persona datosPersonales)
-        {
-            FechaIngreso = fechaIngreso;
-            Matricula = matricula;
-            Puesto = puesto;
-            Sueldo = sueldo;
-            TipoContrato = tipoContrato;
-            DatosPersonales = datosPersonales;
-            SalarioFijo = true;
-        }
-
-        // Constructor completo (para obtener de la BD o actualización)
-        public Empleado(int id, int idPersona, DateTime fechaIngreso, string matricula, string puesto, decimal sueldo, string tipoContrato, bool salarioFijo, DateTime? fechaBaja, Persona datosPersonales)
-        {
-            Id = id;
-            IdPersona = idPersona;
-            FechaIngreso = fechaIngreso;
-            Matricula = matricula;
-            Puesto = puesto;
-            Sueldo = sueldo;
-            TipoContrato = tipoContrato;
-            SalarioFijo = salarioFijo;
-            FechaBaja = fechaBaja;
-            DatosPersonales = datosPersonales;
-        }
+        TrayectoriaLaboral = new TrayectoriaLaboral();
+        PuestoActual = new PuestoActual();
+        Domicilio = new Domicilio();
     }
+    // ... (El resto de constructores debe ser refactorizado)
 }

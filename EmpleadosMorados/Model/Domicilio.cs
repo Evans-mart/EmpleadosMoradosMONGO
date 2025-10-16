@@ -1,51 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EmpleadosMorados.Model
+﻿// Model/Domicilio.cs (CORREGIDA)
+using MongoDB.Bson.Serialization.Attributes;
+namespace EmpleadosMorados.Model;
+public class Domicilio
 {
-    public class Domicilio
+    [BsonElement("calle")]
+    public string Calle { get; set; }
+    [BsonElement("no_ext")]
+    public string NoExterior { get; set; }
+    [BsonElement("no_int")]
+    public string NoInterior { get; set; }
+    [BsonElement("cp")]
+    public int CodigoPostal { get; set; } // Lo cambiamos a int para que mapee el tipo BSON
+    [BsonElement("colonia")]
+    public string Colonia { get; set; }
+
+    // ¡CRÍTICO: INCORPORACIÓN DEL SUB-DOCUMENTO!
+    [BsonElement("municipio")]
+    public Municipio Municipio { get; set; }
+
+    // Constructor por defecto
+    public Domicilio()
     {
-        public string Calle { get; set; }
-        public string NoExterior { get; set; }
-        public string NoInterior { get; set; }
-        public string CodigoPostal { get; set; }
-        public string Colonia { get; set; }
-        public string Estado { get; set; } // Nombre del Estado (Catálogo)
-        public string Municipio { get; set; } // Nombre del Municipio (Catálogo)
-        public string IdMunicipio { get; set; } // Clave foránea para la tabla DOMICILIOS
-
-        // Constructor por defecto
-        public Domicilio()
-        {
-            NoInterior = "N/A"; // Valor por defecto del DDL
-            // Se asume que IdMunicipio se obtendrá aparte
-        }
-
-        // Constructor con campos obligatorios de inserción (para usar al crear un nuevo empleado)
-        public Domicilio(string calle, string noExterior, string codigoPostal, string colonia, string idMunicipio)
-        {
-            Calle = calle;
-            NoExterior = noExterior;
-            NoInterior = "N/A";
-            CodigoPostal = codigoPostal;
-            Colonia = colonia;
-            IdMunicipio = idMunicipio;
-        }
-
-        // Constructor completo (incluye NoInterior y nombres de catálogo para lectura)
-        public Domicilio(string calle, string noExterior, string noInterior, string codigoPostal, string colonia, string idMunicipio, string estado, string municipio)
-        {
-            Calle = calle;
-            NoExterior = noExterior;
-            NoInterior = noInterior;
-            CodigoPostal = codigoPostal;
-            Colonia = colonia;
-            IdMunicipio = idMunicipio;
-            Estado = estado;
-            Municipio = municipio;
-        }
+        NoInterior = "N/A";
+        Municipio = new Municipio();
     }
 }

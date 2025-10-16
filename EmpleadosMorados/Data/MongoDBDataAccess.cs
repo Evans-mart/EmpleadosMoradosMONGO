@@ -1,0 +1,138 @@
+﻿// Data/MongoDBDataAccess.cs (CORREGIDA y AMPLIADA)
+using System;
+using System.Threading.Tasks;
+using EmpleadosMorados.Model;
+using MongoDB.Driver;
+using NLog;
+using System.Collections.Generic; // Para List<KeyValuePair>
+
+namespace EmpleadosMorados.Data
+{
+    public class MongoDBDataAccess
+    {
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly MongoDbContext _context;
+
+        public MongoDBDataAccess()
+        {
+            _context = new MongoDbContext();
+        }
+
+        public IMongoCollection<Empleado> Usuarios => _context.Usuarios; // Propiedad de acceso directo para PersonasDataAccess
+
+        // ... [El método InsertarUsuarioAsync y GetNextSequenceIdAsync están correctos, los omito por espacio]
+
+        // Método auxiliar para obtener el ID secuencial (Necesario si usas _id: 1, 2, 3, ...)
+        private async Task<int> GetNextSequenceIdAsync(string collectionName)
+        {
+            var sort = Builders<Empleado>.Sort.Descending(e => e.Id);
+            var lastUser = await _context.Usuarios
+                .Find(_ => true)
+                .Sort(sort)
+                .Limit(1)
+                .FirstOrDefaultAsync();
+
+            return (lastUser != null) ? lastUser.Id + 1 : 1;
+        }
+
+        public async Task<int> InsertarUsuarioAsync(Empleado nuevoEmpleado)
+        {
+            try
+            {
+                int nextId = await GetNextSequenceIdAsync("usuarios");
+                nuevoEmpleado.Id = nextId;
+
+                await _context.Usuarios.InsertOneAsync(nuevoEmpleado);
+
+                _logger.Info($"Usuario insertado en MongoDB. ID: {nuevoEmpleado.Id}");
+                return nuevoEmpleado.Id;
+            }
+            catch (MongoWriteException mwEx) when (mwEx.WriteConcernError?.Code == 11000)
+            {
+                // La condición de error 11000 es suficiente
+                _logger.Warn(mwEx, "Error de unicidad (CURP, RFC, Teléfono o Correo duplicado) al insertar usuario.");
+                return -1;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error general al insertar usuario en MongoDB");
+                return -2;
+            }
+        }
+
+
+        // 🚀 Métodos para Catálogos 🚀
+
+        public async Task<List<KeyValuePair<string, string>>> ObtenerDepartamentosActivosAsync()
+        {
+            // Mapea la colección 'departamentos' a KeyValuePair<string, string>
+            var departamentos = await _context.Departamentos
+                .Find(d => d.Estatus == "ACTIVO")
+                // Nombre_Depto es el campo correcto para la proyección según tu DDL
+                .Project(d => new KeyValuePair<string, string>(d.Id_Depto, d.Nombre_Depto))
+                .ToListAsync();
+
+            return departamentos;
+        }
+
+        public async Task<List<KeyValuePair<string, string>>> ObtenerEstadosActivosAsync()
+        {
+            // ⚠️ CRÍTICO: La clase Estado.cs mapea el nombre a Nombre_Estado
+            var estados = await _context.CatEstados
+                .Find(e => e.Estatus == "ACTIVO")
+                .Project(e => new KeyValuePair<string, string>(e.Id_Estado, e.Nombre_Estado))
+                .ToListAsync();
+
+            return estados;
+        }
+
+        public async Task<List<KeyValuePair<string, string>>> ObtenerMunicipiosPorEstadoAsync(string idEstado)
+        {
+            // Mapea la colección 'cat_municipios' a KeyValuePair<string, string>
+            var municipios = await _context.CatMunicipios
+                .Find(m => m.Id_Estado == idEstado && m.Estatus == "ACTIVO")
+                // La clase Municipio.cs mapea el nombre a Nom_Municipio.
+                .Project(m => new KeyValuePair<string, string>(m.Id_Municipio, m.Nom_Municipio))
+                .ToListAsync();
+
+            return municipios;
+        }
+
+        public async Task<List<KeyValuePair<string, string>>> ObtenerPuestosPorDeptoAsync(string idDepto) // 👈 NUEVO
+        {
+            // Mapea la colección 'puestos' a KeyValuePair<string, string>
+            var puestos = await _context.Puestos
+                .Find(p => p.Id_Depto == idDepto && p.Estatus == "ACTIVO")
+                .Project(p => new KeyValuePair<string, string>(p.Id_Puesto, p.Nom_Puesto))
+                .ToListAsync();
+
+            return puestos;
+        }
+
+        // 🚀 Métodos para obtener el Documento COMPLETO por ID 🚀
+        // Necesarios para la denormalización en el Controller
+
+        public async Task<Departamento> GetDepartamentoByIdAsync(string idDepto)
+        {
+            return await _context.Departamentos.Find(d => d.Id_Depto == idDepto).FirstOrDefaultAsync();
+        }
+
+        public async Task<Puesto> GetPuestoByIdAsync(string idPuesto)
+        {
+            return await _context.Puestos.Find(p => p.Id_Puesto == idPuesto).FirstOrDefaultAsync();
+        }
+
+        public async Task<Estado> GetEstadoByIdAsync(string idEstado)
+        {
+            return await _context.CatEstados.Find(e => e.Id_Estado == idEstado).FirstOrDefaultAsync();
+        }
+
+        public async Task<Municipio> GetMunicipioByIdAsync(string idMunicipio)
+        {
+            // Asumo que el modelo Municipio está como colección de catálogo y tiene el campo id_estado
+            return await _context.CatMunicipios.Find(m => m.Id_Municipio == idMunicipio).FirstOrDefaultAsync();
+        }
+
+
+    }
+}

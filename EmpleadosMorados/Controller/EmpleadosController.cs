@@ -1,118 +1,122 @@
-﻿using NLog;
+﻿// Controller/EmpleadosController.cs (CORREGIDA)
+using NLog;
 using EmpleadosMorados.Data;
 using EmpleadosMorados.Model;
-using EmpleadosMorados.Utilities; // Asegúrate de que tu clase de validaciones esté aquí
 using System;
 using System.Collections.Generic;
-using Npgsql;  // Asegúrate de tener esta referencia para la excepción PostgresException
+using System.Threading.Tasks;
+using MongoDB.Driver; // Necesario para algunas excepciones de Mongo
 
 namespace EmpleadosMorados.Controller
-
 {
-    //Ya jala todo
     public class EmpleadosController
     {
-        private static readonly Logger _logger = LoggingManager.GetLogger("EmpleadosMorados.Controller.EmpleadosController");
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger(); // Cambiado a GetCurrentClassLogger para simplicidad
         private readonly EmpleadosDataAccess _empleadosData;
-        private readonly PersonasDataAccess _personasData;
-        private readonly CatalogosDataAccess _catalogosData;
+        private readonly PersonasDataAccess _personasData; // Solo para validaciones de unicidad
+        private readonly MongoDBDataAccess _mongoData; // Para obtener documentos de catálogo
+        private readonly CatalogosDataAccess _catalogosData; // Para las llamadas síncronas de ComboBox
 
         public EmpleadosController()
         {
             _empleadosData = new EmpleadosDataAccess();
             _personasData = new PersonasDataAccess();
+            _mongoData = new MongoDBDataAccess();
             _catalogosData = new CatalogosDataAccess();
         }
 
-        public (int id, string mensaje) RegistrarNuevoEmpleado(Empleado empleado, string municipioNombre, string estadoNombre,string puestoNombre, string deptoNombre)
+        // 🚀 MÉTODO PRINCIPAL DE ALTA (Corregido) 🚀
+        public async Task<(int id, string mensaje)> RegistrarNuevoEmpleado(
+            Empleado empleado,
+            string idMunicipio, // Corregido: La vista DEBE pasar los IDs seleccionados
+            string idEstado,    // Corregido: La vista DEBE pasar los IDs seleccionados
+            string idPuesto,    // Corregido: La vista DEBE pasar los IDs seleccionados
+            string idDepto)     // Corregido: La vista DEBE pasar los IDs seleccionados
         {
             try
             {
-                // 1. Validaciones de duplicidad (Delegado a PersonasDataAccess)
-                if (_personasData.ExisteCurp(empleado.DatosPersonales.Curp))
-                {
-                    return (-1, $"El CURP {empleado.DatosPersonales.Curp} ya está registrado en el sistema.");
-                }
-                if (_personasData.ExisteRFC(empleado.DatosPersonales.Rfc))
-                {
-                    return (-1, $"El RFC {empleado.DatosPersonales.Rfc} ya está registrado en el sistema.");
-                }
+                // 1. Validaciones de unicidad (usando los índices de Mongo)
+                // Se valida CURP, RFC y Teléfono. El correo también se valida con el índice.
 
-                // 2. Validaciones adicionales para claves foráneas y campos requeridos
-                // Validar el ID del Municipio
-                string idMunicipio = _catalogosData.ObtenerIdMunicipioPorNombres(municipioNombre, estadoNombre);
-                if (string.IsNullOrEmpty(idMunicipio))
+                if (await _personasData.ExisteCurpAsync(empleado.Curp))
                 {
-                    return (-2, "Error: No se encontró el ID del Municipio/Estado seleccionado.");
+                    return (-1, $"El CURP {empleado.Curp} ya está registrado.");
                 }
-
-                // Validar el ID del Puesto
-                string idPuesto = _catalogosData.ObtenerIdPuestoPorNombres(puestoNombre, deptoNombre);
-                if (string.IsNullOrEmpty(idPuesto))
+                if (await _personasData.ExisteRFCAsync(empleado.Rfc))
                 {
-                    return (-2, "Error: No se encontró el ID del Puesto/Depto seleccionado.");
+                    return (-1, $"El RFC {empleado.Rfc} ya está registrado.");
                 }
+                // Nota: La validación de unicidad de teléfono y correos se manejará en la capa DAL/Mongo por el índice.
 
-                // Asignar el ID al modelo Domicilio
-                empleado.DatosPersonales.Domicilio.IdMunicipio = idMunicipio;
+                // 2. Denormalización: Obtener documentos de catálogo y anidarlos
 
-                // Validar que el ID de Departamento sea válido
-                if (string.IsNullOrEmpty(empleado.DatosPersonales.IdDepartamento) ||
-                    !_catalogosData.ObtenerDepartamentosActivos().Exists(d => d.Key == empleado.DatosPersonales.IdDepartamento))
+                // a) Trayectoria Laboral
+                empleado.TrayectoriaLaboral.Fecha_Alta = DateTime.Now;
+                empleado.TrayectoriaLaboral.Usr_Contrato = "NA-0000";
+
+                // b) Correos: Aseguramos el mapeo del correo principal (FALTA EL CAMPO txtCorreoPrincipal en la vista para ser correcto)
+                // Asumo que tu vista se llama 'txtCorreoPrincipal' y 'txtCorreoSecundario'
+                // Esta lógica se moverá a la Vista, por ahora lo simplificamos (Ver correcciones en la Vista)
+
+                // c) Puesto Actual (Denormalización)
+                Departamento depto = await _mongoData.GetDepartamentoByIdAsync(idDepto);
+                Puesto puesto = await _mongoData.GetPuestoByIdAsync(idPuesto);
+
+                if (depto == null || puesto == null)
                 {
-                    return (-2, "Error: El Departamento seleccionado no es válido.");
+                    return (-1, "Departamento o Puesto no encontrado en los catálogos.");
                 }
 
-                // Validar el teléfono (debe tener 10 dígitos)
-                if (empleado.DatosPersonales.Telefono.ToString().Length != 10)
+                // Construcción del PuestoActual anidado
+                empleado.PuestoActual.Id_Puesto = puesto.Id_Puesto;
+                empleado.PuestoActual.Nombre_Puesto = puesto.Nom_Puesto;
+                empleado.PuestoActual.Departamento.Id_Depto = depto.Id_Depto;
+                empleado.PuestoActual.Departamento.Nombre_Depto = depto.Nombre_Depto;
+
+                // d) Domicilio (Denormalización Anidada)
+                Municipio municipioCat = await _mongoData.GetMunicipioByIdAsync(idMunicipio);
+                Estado estadoCat = await _mongoData.GetEstadoByIdAsync(idEstado);
+
+                if (municipioCat == null || estadoCat == null)
                 {
-                    return (-2, "Error: El número de teléfono debe tener 10 dígitos.");
+                    return (-1, "Estado o Municipio no encontrado en los catálogos geográficos.");
                 }
 
-                // Validar SEXO (debe ser uno de los valores válidos)
-                if (!new List<string> { "FEMENINO", "MASCULINO", "OTRO" }.Contains(empleado.DatosPersonales.Sexo))
-                {
-                    return (-2, "Error: El sexo debe ser 'FEMENINO', 'MASCULINO' o 'OTRO'.");
-                }
+                // Reconstrucción del Domicilio anidado (Modelo de la base de datos)
+                empleado.Domicilio.Municipio.Id_Municipio = municipioCat.Id_Municipio;
 
-                // 3. Registrar el empleado (transacción que inserta USUARIOS, CORREOS, DOMICILIOS y TRAY_LAB)
-                _logger.Info($"Iniciando registro para {empleado.DatosPersonales.NombreCompleto}...");
-                int idGenerado = _empleadosData.InsertarEmpleado(empleado); // Llama a la lógica corregida
+                // ⚠️ CORRECCIÓN CLAVE: Usar Nom_Municipio del modelo de catálogo
+                empleado.Domicilio.Municipio.Nombre_Municipio = municipioCat.Nom_Municipio;
+
+                empleado.Domicilio.Municipio.Estado.Id_Estado = estadoCat.Id_Estado;
+                empleado.Domicilio.Municipio.Estado.Nombre_Estado = estadoCat.Nombre_Estado;
+                empleado.Domicilio.Municipio.Estado.Pais = estadoCat.Pais;
+
+                // 3. Registrar el empleado (Inserción Atómica en Mongo)
+                _logger.Info($"Iniciando registro para {empleado.Nombre} en Mongo...");
+                int idGenerado = await _empleadosData.InsertarEmpleadoAsync(empleado);
 
                 if (idGenerado > 0)
                 {
-                    _logger.Info($"Empleado registrado exitosamente. ID: {idGenerado}");
                     return (idGenerado, "Empleado registrado exitosamente.");
                 }
-                else
+                else if (idGenerado == -1)
                 {
-                    return (0, "Error al registrar el empleado en la base de datos.");
+                    return (-1, "Fallo en el registro: Dato duplicado (CURP, RFC, Teléfono o Correo).");
                 }
-            }
-            catch (Npgsql.PostgresException ex)
-            {
-                // Captura de la excepción PostgresException para detalles específicos
-                _logger.Error(ex, "Error en la base de datos (PostgresException).");
-
-                // Imprime los detalles completos de la excepción
-                Console.WriteLine($"Código SQL: {ex.SqlState}");  // Código SQL del error
-                Console.WriteLine($"Detalle: {ex.Detail}");     // Detalles adicionales
-                Console.WriteLine($"Sugerencia: {ex.Hint}");    // Sugerencia de PostgreSQL
-                Console.WriteLine($"Mensaje: {ex.Message}");    // Mensaje del error
-
-                // Devuelve el mensaje con detalles completos
-                return (-3, $"Error de base de datos: {ex.Message}. Código SQL: {ex.SqlState}");
+                else // idGenerado == -2 (Error general en DAL)
+                {
+                    return (-2, "Error desconocido al intentar insertar el documento en MongoDB.");
+                }
             }
             catch (Exception ex)
             {
-                // Captura de excepciones generales
-                _logger.Error(ex, "Error inesperado al registrar el empleado.");
+                _logger.Error(ex, "Error inesperado en el Controller al registrar empleado.");
                 return (-4, $"Error inesperado: {ex.Message}");
             }
         }
 
-        // Métodos auxiliares de negocio para poblar ComboBoxes
-
+        // Métodos auxiliares síncronos para poblar ComboBoxes
         public List<KeyValuePair<string, string>> ObtenerDepartamentos()
         {
             return _catalogosData.ObtenerDepartamentosActivos();
@@ -130,6 +134,27 @@ namespace EmpleadosMorados.Controller
         public List<KeyValuePair<string, string>> ObtenerPuestosPorDepto(string idDepto)
         {
             return _catalogosData.ObtenerPuestosPorDepto(idDepto);
+        }
+
+        // 🚀 NUEVOS MÉTODOS ASÍNCRONOS (Delegación directa a MongoDBDataAccess)
+        public async Task<List<KeyValuePair<string, string>>> ObtenerDepartamentosAsync()
+        {
+            return await _mongoData.ObtenerDepartamentosActivosAsync();
+        }
+
+        public async Task<List<KeyValuePair<string, string>>> ObtenerEstadosAsync()
+        {
+            return await _mongoData.ObtenerEstadosActivosAsync();
+        }
+
+        public async Task<List<KeyValuePair<string, string>>> ObtenerMunicipiosPorEstadoAsync(string idEstado)
+        {
+            return await _mongoData.ObtenerMunicipiosPorEstadoAsync(idEstado);
+        }
+
+        public async Task<List<KeyValuePair<string, string>>> ObtenerPuestosPorDeptoAsync(string idDepto)
+        {
+            return await _mongoData.ObtenerPuestosPorDeptoAsync(idDepto);
         }
     }
 }

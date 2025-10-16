@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using EmpleadosMorados.Controller;
@@ -21,15 +17,15 @@ namespace EmpleadosMorados.View
         {
             InitializeComponent(); // Simulación del método generado por el diseñador
             _empleadosNegocio = new EmpleadosController();
-            InicializaVentanaEmpleadoRegistro();
+            //InicializaVentanaEmpleadoRegistro();
         }
-        public void InicializaVentanaEmpleadoRegistro()
-        {
-            PoblaGenero();
-            PoblaDepartamentos();
-            PoblaEstados();
-            // Otros inicializadores de Placeholders si se necesitan
-        }
+        //public void InicializaVentanaEmpleadoRegistro()
+        //{
+        //    PoblaGenero();
+        //    PoblaDepartamentos();
+        //    PoblaEstados();
+        //    // Otros inicializadores de Placeholders si se necesitan
+        //}
         private void PoblaGenero()
         {
             // Usamos los valores exactos del DDL: MASCULINO, FEMENINO, OTRO
@@ -45,12 +41,12 @@ namespace EmpleadosMorados.View
             cboSexo.SelectedIndex = -1;
         }
 
-        private void PoblaDepartamentos()
+        private async Task PoblaDepartamentosAsync()
         {
-            // Implementación simplificada
             try
             {
-                var departamentos = _empleadosNegocio.ObtenerDepartamentos();
+                // 🚨 Llamar a la nueva versión asíncrona del Controller
+                var departamentos = await _empleadosNegocio.ObtenerDepartamentosAsync();
                 cboDepto.DataSource = new BindingSource(departamentos, null);
                 cboDepto.DisplayMember = "Value";
                 cboDepto.ValueMember = "Key";
@@ -62,12 +58,12 @@ namespace EmpleadosMorados.View
             }
         }
 
-        private void PoblaEstados()
+        private async Task PoblaEstadosAsync()
         {
-            // Implementación simplificada
             try
             {
-                var estados = _empleadosNegocio.ObtenerEstados();
+                // 🚨 Llamar a la nueva versión asíncrona del Controller
+                var estados = await _empleadosNegocio.ObtenerEstadosAsync();
                 cboEstado.DataSource = new BindingSource(estados, null);
                 cboEstado.DisplayMember = "Value";
                 cboEstado.ValueMember = "Key";
@@ -116,24 +112,23 @@ namespace EmpleadosMorados.View
             // podrías hacer que se muestre de nuevo. Pero Application.Exit() es más seguro y simple.
         }
 
-        private void cboEstado_SelectedIndexChanged(object sender, EventArgs e)
+        private async void cboEstado_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Simulación del ComboBox de Estados
             if (cboEstado.SelectedValue != null && cboEstado.SelectedValue is string idEstado)
             {
-                PoblaMunicipios(idEstado);
+                await PoblaMunicipiosAsync(idEstado); // 👈 Usar await
             }
             else
             {
                 cboMunicipio.DataSource = null;
             }
         }
-        private void PoblaMunicipios(string idEstado)
+        private async Task PoblaMunicipiosAsync(string idEstado)
         {
-            // Implementación simplificada
             try
             {
-                var municipios = _empleadosNegocio.ObtenerMunicipiosPorEstado(idEstado);
+                // 🚨 Llamar a la nueva versión asíncrona del Controller
+                var municipios = await _empleadosNegocio.ObtenerMunicipiosPorEstadoAsync(idEstado);
                 cboMunicipio.DataSource = new BindingSource(municipios, null);
                 cboMunicipio.DisplayMember = "Value";
                 cboMunicipio.ValueMember = "Key";
@@ -144,12 +139,12 @@ namespace EmpleadosMorados.View
                 MessageBox.Show("Error al cargar municipios: " + ex.Message, "Sistema", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        private void PoblaPuestos(string idDepto)
+        private async Task PoblaPuestosAsync(string idDepto)
         {
-            // Implementación simplificada
             try
             {
-                var puestos = _empleadosNegocio.ObtenerPuestosPorDepto(idDepto);
+                // 🚨 Llamar a la nueva versión asíncrona del Controller
+                var puestos = await _empleadosNegocio.ObtenerPuestosPorDeptoAsync(idDepto);
                 cboPuesto.DataSource = new BindingSource(puestos, null);
                 cboPuesto.DisplayMember = "Value";
                 cboPuesto.ValueMember = "Key";
@@ -161,67 +156,85 @@ namespace EmpleadosMorados.View
             }
         }
 
-        private void btnAgregar_Click(object sender, EventArgs e)
+        private async void btnAgregar_Click(object sender, EventArgs e)
         {
-            GuardarEmpleado();
+            await GuardarEmpleadoAsync();
         }
-        private void GuardarEmpleado()
+        // 🚀 MÉTODO DE INSERCIÓN CORREGIDO PARA PREVENIR FORMATEXCEPTION 🚀
+        private async Task GuardarEmpleadoAsync()
         {
-            // 1. Validaciones de la Vista (se asume que existe el método ValidarDatosFormulario)
+            // 1. Validaciones de la Vista
             if (!ValidarDatosFormulario())
             {
                 return;
             }
 
+            // Variables para la conversión segura
+            int codigoPostal;
+            long telefono;
+
+            // ⚠️ 1.1 Conversión Segura de CP
+            if (!int.TryParse(txtCP.Text.Trim(), out codigoPostal))
+            {
+                MessageBox.Show("El Código Postal (CP) debe ser un número entero válido.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // ⚠️ 1.2 Conversión Segura de Teléfono
+            if (!long.TryParse(txtTelefono.Text.Trim(), out telefono))
+            {
+                MessageBox.Show("El Teléfono debe ser un número entero válido.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             try
             {
-                // ** 2. Mapeo de Domicilio **
+                // Obtener IDs seleccionados
+                string idDepto = cboDepto.SelectedValue.ToString();
+                string idPuesto = cboPuesto.SelectedValue.ToString();
+                string idEstado = cboEstado.SelectedValue.ToString();
+                string idMunicipio = cboMunicipio.SelectedValue.ToString();
+
+                // 2. Mapeo de Domicilio
                 Domicilio domicilio = new Domicilio
                 {
                     Calle = txtCalle.Text.Trim(),
                     NoExterior = txtNoExt.Text.Trim(),
                     NoInterior = txtNoInt.Text.Trim(),
-                    CodigoPostal = txtCP.Text.Trim(),
+                    CodigoPostal = codigoPostal, // Usamos la variable convertida
                     Colonia = txtColonia.Text.Trim(),
-                    Estado = cboEstado.Text,
-                    Municipio = cboMunicipio.Text
-                    // El campo IdMunicipio se obtendrá en la capa de negocio
                 };
 
-                // ** 3. Mapeo de Persona (USUARIOS, CORREOS) **
-                Persona persona = new Persona
+                // 3. Mapeo de Correos
+                List<Correo> correos = new List<Correo>();
+                correos.Add(new Correo { Tipo = "PRINCIPAL", Correo_Electronico = txtCorreoPrincipal.Text.Trim() });
+                if (!string.IsNullOrWhiteSpace(txtCorreoSecundario.Text))
                 {
-                    NombreCompleto = txtNombre.Text.Trim(),
+                    correos.Add(new Correo { Tipo = "SECUNDARIO", Correo_Electronico = txtCorreoSecundario.Text.Trim() });
+                }
+
+                // 4. Mapeo de Empleado
+                Empleado empleado = new Empleado
+                {
+                    Nombre = txtNombre.Text.Trim(),
                     ApellidoPaterno = txtApPat.Text.Trim(),
                     ApellidoMaterno = txtApMat.Text.Trim(),
                     Curp = txtCURP.Text.Trim(),
                     Rfc = txtRFC.Text.Trim(),
                     Sexo = cboSexo.SelectedValue?.ToString() ?? "OTRO",
-                    Telefono = txtTelefono.Text.Trim(),
-                    CorreoPrincipal = txtCorreoPrincipal.Text.Trim(),
-                    CorreoSecundario = txtCorreoSecundario.Text.Trim(),
-                    IdDepartamento = cboDepto.SelectedValue?.ToString(),
-                    IdPuesto = cboPuesto.SelectedValue?.ToString(),
+                    Telefono = telefono, // Usamos la variable convertida
+                    Estatus = "ACTIVO",
                     Domicilio = domicilio,
-                    Estatus = "ACTIVO"
+                    Correos = correos
                 };
 
-                // ** 4. Mapeo de Empleado (TRAY_LAB) **
-                Empleado empleado = new Empleado
-                {
-                    // La vista solo tiene un campo de departamento, el resto se asume o se setea por defecto.
-                    // Si la vista tuviera Matricula, Sueldo, Puesto, se mapearían aquí.
-                    Matricula = "NA-0000",
-                    Puesto = "N/A",
-                    Sueldo = 0.00m,
-                    TipoContrato = "INDEFINIDO",
-                    FechaIngreso = DateTime.Now,
-                    DatosPersonales = persona
-                };
-
-                // ** 5. Llamar al Controlador/Negocio **
-                // Se envían los nombres de municipio/estado para que el negocio obtenga el ID_MUNICIPIO
-                var (id, mensaje) = _empleadosNegocio.RegistrarNuevoEmpleado(empleado, cboMunicipio.Text, cboEstado.Text,cboPuesto.Text,cboDepto.Text);
+                // 5. Llamar al Controlador/Negocio
+                var (id, mensaje) = await _empleadosNegocio.RegistrarNuevoEmpleado(
+                    empleado,
+                    idMunicipio,
+                    idEstado,
+                    idPuesto,
+                    idDepto);
 
                 if (id > 0)
                 {
@@ -230,22 +243,22 @@ namespace EmpleadosMorados.View
                 }
                 else
                 {
-                    MessageBox.Show($"Fallo en el registro: {mensaje}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    string prefijo = id == -1 ? "Error de Duplicidad" : "Fallo en el registro";
+                    MessageBox.Show($"{prefijo}: {mensaje}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
             }
             catch (Exception ex)
             {
+                // Ahora esta captura es para errores inesperados o de conexión
                 MessageBox.Show($"Error crítico en la aplicación: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         // --- Métodos Auxiliares (Limpieza y Validación) ---
 
+        // ⚠️ REVISIÓN DE LA VALIDACIÓN PARA INCLUIR CAMPOS NUMÉRICOS NO VACÍOS
         private bool ValidarDatosFormulario()
         {
-            // ******* Lógica de validación de campos obligatorios *******
-            // Aquí se debe replicar la lógica de DatosVacios y DatosValidos
-
             // Validación de combos
             if (cboSexo.SelectedValue == null || cboDepto.SelectedValue == null ||
                 cboEstado.SelectedValue == null || cboMunicipio.SelectedValue == null)
@@ -254,20 +267,16 @@ namespace EmpleadosMorados.View
                 return false;
             }
 
-            // Validación de campos de texto obligatorios (solo un ejemplo parcial)
+            // Validación de campos de texto obligatorios y numéricos
             if (string.IsNullOrWhiteSpace(txtNombre.Text) || string.IsNullOrWhiteSpace(txtRFC.Text) ||
-                string.IsNullOrWhiteSpace(txtCorreoPrincipal.Text) || string.IsNullOrWhiteSpace(txtCalle.Text))
+                string.IsNullOrWhiteSpace(txtCorreoPrincipal.Text) || string.IsNullOrWhiteSpace(txtCalle.Text) ||
+                string.IsNullOrWhiteSpace(txtCP.Text) || string.IsNullOrWhiteSpace(txtTelefono.Text)) // 👈 CP y Teléfono deben ser validados como no vacíos
             {
-                MessageBox.Show("Los campos con * son obligatorios.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Los campos obligatorios (incluyendo CP y Teléfono) deben llenarse.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
-            // Validación de formatos (ejemplo)
-            // if (!Validaciones.EsRFCValido(txtRFC.Text))
-            // {
-            //     MessageBox.Show("Formato de RFC inválido.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            //     return false;
-            // }
+            // Si pasan la validación de no vacíos, la conversión en GuardarEmpleadoAsync se encargará del formato.
 
             return true;
         }
@@ -289,8 +298,9 @@ namespace EmpleadosMorados.View
             txtCorreoSecundario.Text = string.Empty;
             txtTelefono.Text = string.Empty;
             cboDepto.Text = string.Empty;
+            cboPuesto.Text = string.Empty;
             // ...
-            InicializaVentanaEmpleadoRegistro(); // La forma más simple de resetear combos y reestablecer estados
+            //InicializaVentanaEmpleadoRegistro(); // La forma más simple de resetear combos y reestablecer estados
         }
 
         private void btnLimpiar_Click(object sender, EventArgs e)
@@ -298,17 +308,23 @@ namespace EmpleadosMorados.View
             LimpiarCampos();
         }
 
-        private void cboDepto_SelectedIndexChanged(object sender, EventArgs e)
+        private async void cboDepto_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Simulación del ComboBox de Deptos
             if (cboDepto.SelectedValue != null && cboDepto.SelectedValue is string idDepto)
             {
-                PoblaPuestos(idDepto);
+                await PoblaPuestosAsync(idDepto); // 👈 Usar await
             }
             else
             {
                 cboPuesto.DataSource = null;
             }
+        }
+
+        private async void frmAltaEmpleados_Load_1(object sender, EventArgs e)
+        {
+            PoblaGenero(); // Síncrono, OK
+            await PoblaDepartamentosAsync(); // Usar la nueva versión asíncrona
+            await PoblaEstadosAsync();
         }
     }
 }

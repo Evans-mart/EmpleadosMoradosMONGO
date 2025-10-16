@@ -895,6 +895,7 @@
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Alta de empleados";
             FormClosed += frmAltaEmpleados_FormClosed;
+            Load += frmAltaEmpleados_Load_1;
             panelBar.ResumeLayout(false);
             gBoxDPersonales.ResumeLayout(false);
             panel5.ResumeLayout(false);

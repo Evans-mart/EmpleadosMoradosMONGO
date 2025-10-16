@@ -1,122 +1,48 @@
-﻿using System;
-using System.Data;
-using System.Linq;
-using System.Text;
+﻿// Data/EmpleadosDataAccess.cs
+using System;
+using System.Threading.Tasks;
 using EmpleadosMorados.Model;
-using EmpleadosMorados.Utilities;
 using NLog;
-using Npgsql;
 
 namespace EmpleadosMorados.Data
 {
+    // Esta clase solo existirá para orquestar la inserción de Empleado (que ahora es un solo documento)
     public class EmpleadosDataAccess
     {
-        private static readonly Logger _logger = LoggingManager.GetLogger("NominaXpert.Data.EmpleadosDataAccess");
-        private readonly PostgresSQLDataAccess _dbAccess;
-        private readonly PersonasDataAccess _personasData;
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        private readonly MongoDBDataAccess _mongoData; // Usamos el nuevo acceso a datos
+        private readonly PersonasDataAccess _personasData; // Para las validaciones
 
         public EmpleadosDataAccess()
         {
-            _dbAccess = PostgresSQLDataAccess.GetInstance();
-            _personasData = new PersonasDataAccess();
+            _mongoData = new MongoDBDataAccess(); // Se encarga de la inserción real
+            _personasData = new PersonasDataAccess(); // Se encarga de las validaciones de unicidad
         }
 
-        // Insertar un nuevo empleado (Datos Personales + Registro Laboral)
-        public int InsertarEmpleado(Empleado empleado)
+        // El método de alta DEBE ser asíncrono
+        public async Task<int> InsertarEmpleadoAsync(Empleado empleado)
         {
-            if (empleado?.DatosPersonales == null)
+            if (empleado == null) return -1;
+
+            _logger.Info($"Iniciando inserción de Empleado en MongoDB...");
+
+            // Ahora, la inserción es atómica y no necesita lógica compleja de múltiples tablas.
+            // La lógica de TRAY_LAB ahora está incrustada en el objeto Empleado (Model/Empleado.cs).
+
+            // Llama al método real de inserción en MongoDBDataAccess
+            int idGenerado = await _mongoData.InsertarUsuarioAsync(empleado);
+
+            if (idGenerado > 0)
             {
-                _logger.Error("Los datos del empleado o la persona son nulos");
-                return -1;
+                _logger.Info($"Empleado insertado exitosamente con ID: {idGenerado}");
             }
-
-            // 1. Insertar Persona/Usuario, Domicilio, Correos (Maneja USUARIOS, CORREOS, DOMICILIOS)
-            // Se asume que IdDepartamento se pasa en DatosPersonales.IdDepartamento
-            int idPersona = _personasData.InsertarPersona(empleado.DatosPersonales);
-
-            if (idPersona <= 0)
+            else
             {
-                _logger.Error("Fallo al insertar los datos de la persona/usuario.");
-                return -1;
+                _logger.Error("Fallo al insertar el empleado en MongoDB.");
             }
-
-            empleado.IdPersona = idPersona;
-
-            // 2. Insertar el registro laboral en la tabla TRAY_LAB
-            // NOTA: TRAY_LAB solo registra la fecha de alta. Si se necesitan más campos, la BD debe cambiar.
-            string trayLabQuery = @"INSERT INTO TRAY_LAB (NUMERO_USUARIO, FECHA_ALTA, USR_CONTRATO)
-                                    VALUES (@IdPersona, @FechaAlta, @UsrContrato)";
-
-            NpgsqlParameter[] trayLabParams = new NpgsqlParameter[]
-            {
-                _dbAccess.CreateParameter("@IdPersona", empleado.IdPersona),
-                _dbAccess.CreateParameter("@FechaAlta", empleado.FechaIngreso),
-                // Usamos un valor por defecto o la matrícula si no tenemos un usuario de contrato
-                _dbAccess.CreateParameter("@UsrContrato", empleado.Matricula)
-            };
-
-            try
-            {
-                _dbAccess.Connect();
-                int rowsAffected = _dbAccess.ExecuteNonQuery(trayLabQuery, trayLabParams);
-
-                if (rowsAffected > 0)
-                {
-                    _logger.Info($"Registro laboral (TRAY_LAB) insertado correctamente para ID_PERSONA: {idPersona}");
-                    return idPersona; // Retornamos el Id de la persona, ya que es la clave única
-                }
-                else
-                {
-                    _logger.Error($"No se afectó ninguna fila al insertar en TRAY_LAB para ID_PERSONA: {idPersona}");
-                    return -1;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error al insertar el registro laboral (TRAY_LAB)");
-                // Implementar rollback para USUARIOS, CORREOS, DOMICILIOS
-                return -1;
-            }
-            finally
-            {
-                _dbAccess.Disconnect();
-            }
+            return idGenerado;
         }
 
-        // ** El método ActualizarEmpleado se eliminaría o modificaría para solo actualizar los campos laborales 
-        // ** en TRAY_LAB o una tabla de detalle laboral, asumiendo que los datos personales se actualizan por separado.
-
-        //public int ModificarDatosUsuario(Empleado empleado)
-        //{
-        //    if (empleado?.DatosPersonales == null || empleado.IdPersona <= 0)
-        //    {
-        //        _logger.Error("Datos del empleado nulos o ID de Persona no válido para la modificación.");
-        //        return -1;
-        //    }
-
-            // --------------------------------------------------------------------------
-            // ÚNICO PASO: MODIFICAR Datos de la Persona/Usuario (solo tabla USUARIOS)
-            // --------------------------------------------------------------------------
-
-            // Se asume que este método en PersonasDataAccess actualiza dinámicamente
-            // los campos de la tabla principal de Usuarios (o la tabla de personas)
-            // basándose en los datos no nulos del objeto 'DatosPersonales'.
-            //int filasAfectadasUsuario = _personasData.ModificarUsuario(empleado.DatosPersonales);
-
-            //if (filasAfectadasUsuario < 0)
-            //{
-            //    _logger.Error($"Fallo interno al modificar los datos del usuario con ID: {empleado.IdPersona}.");
-            //    return -1; // Indica error
-            //}
-
-            //_logger.Info($"Modificación de datos de usuario exitosa para ID: {empleado.IdPersona}. Filas afectadas: {filasAfectadasUsuario}");
-
-            //// Si la actualización es exitosa, se devuelve el número de filas afectadas (0 o 1).
-            //return filasAfectadasUsuario;
-
-        }
+        // ... (Deberás refactorizar todos los demás métodos de esta clase, como ObtenerEmpleado, etc.)
     }
-        // ...
-
-        // (El resto de métodos como ObtenerTodosLosEmpleados, deben ser refactorizados para usar TRAY_LAB y la nueva estructura de Persona/Domicilio)
-  
+}
