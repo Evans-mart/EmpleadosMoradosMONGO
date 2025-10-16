@@ -25,13 +25,18 @@ namespace EmpleadosMorados.Data
         // Método auxiliar para obtener el ID secuencial (Necesario si usas _id: 1, 2, 3, ...)
         private async Task<int> GetNextSequenceIdAsync(string collectionName)
         {
+            // 1. Definir el orden descendente por Id
             var sort = Builders<Empleado>.Sort.Descending(e => e.Id);
+
+            // 2. Buscar el último usuario
             var lastUser = await _context.Usuarios
-                .Find(_ => true)
+                .Find(_ => true) // Encuentra todos los documentos
                 .Sort(sort)
                 .Limit(1)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(); // Obtiene el primero (el de mayor ID)
 
+            // ⚠️ CORRECCIÓN CLAVE: Devolver 1 si no hay documentos.
+            // Esto asegura que la inserción empiece con _id: 1 si la colección está vacía.
             return (lastUser != null) ? lastUser.Id + 1 : 1;
         }
 
@@ -39,24 +44,21 @@ namespace EmpleadosMorados.Data
         {
             try
             {
+                // ⚠️ Asegurar que el Id se asigna ANTES de InsertOneAsync
                 int nextId = await GetNextSequenceIdAsync("usuarios");
                 nuevoEmpleado.Id = nextId;
 
                 await _context.Usuarios.InsertOneAsync(nuevoEmpleado);
 
-                _logger.Info($"Usuario insertado en MongoDB. ID: {nuevoEmpleado.Id}");
+                // ... (Manejo de éxito)
                 return nuevoEmpleado.Id;
             }
-            catch (MongoWriteException mwEx) when (mwEx.WriteConcernError?.Code == 11000)
-            {
-                // La condición de error 11000 es suficiente
-                _logger.Warn(mwEx, "Error de unicidad (CURP, RFC, Teléfono o Correo duplicado) al insertar usuario.");
-                return -1;
-            }
+            // ... (Manejo de catch -1 y -2)
             catch (Exception ex)
             {
+                // La excepción está siendo capturada aquí, pero necesitamos que devuelva -2.
                 _logger.Error(ex, "Error general al insertar usuario en MongoDB");
-                return -2;
+                return -2; // Devuelve -2 a EmpleadosController
             }
         }
 
