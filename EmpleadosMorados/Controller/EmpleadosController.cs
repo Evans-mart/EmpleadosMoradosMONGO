@@ -91,12 +91,31 @@ namespace EmpleadosMorados.Controller
                     return (-1, "Estado o Municipio no encontrado en los catálogos geográficos.");
                 }
 
+                Estado estadoAnidado = new Estado
+                {
+                    Id_Estado = estadoCat.Id_Estado,
+                    Nombre_Estado = estadoCat.Nombre_Estado,
+                    Pais = estadoCat.Pais
+                };
+
+                // 3. Creamos un nuevo objeto Municipio ANIDADO y limpio
+                Municipio municipioAnidado = new Municipio
+                {
+                    Id_Municipio = municipioCat.Id_Municipio,
+                    // Usamos la propiedad 'Nombre_Municipio' para el anidado
+                    Nom_Municipio = municipioCat.Nom_Municipio,
+                    Estado = estadoAnidado // Anidamos el objeto estado limpio
+                };
+
+                // 4. REEMPLAZAMOS el objeto 'Municipio' vacío del empleado por el objeto limpio
+                empleado.Domicilio.Municipio = municipioAnidado;
+
                 // ⚠️ MODIFICACIÓN DEL BLOQUE: Rellena los objetos Municipio y Estado ya existentes
-                empleado.Domicilio.Municipio.Id_Municipio = municipioCat.Id_Municipio;
-                empleado.Domicilio.Municipio.Nombre_Municipio = municipioCat.Nom_Municipio;
-                empleado.Domicilio.Municipio.Estado.Id_Estado = estadoCat.Id_Estado;
-                empleado.Domicilio.Municipio.Estado.Nombre_Estado = estadoCat.Nombre_Estado;
-                empleado.Domicilio.Municipio.Estado.Pais = estadoCat.Pais;
+                //empleado.Domicilio.Municipio.Id_Municipio = municipioCat.Id_Municipio;
+                //empleado.Domicilio.Municipio.Nom_Municipio = municipioCat.Nom_Municipio;
+                //empleado.Domicilio.Municipio.Estado.Id_Estado = estadoCat.Id_Estado;
+                //empleado.Domicilio.Municipio.Estado.Nombre_Estado = estadoCat.Nombre_Estado;
+                //empleado.Domicilio.Municipio.Estado.Pais = estadoCat.Pais;
                 // ----------------------------------------------------------------------
                 // 3. Registrar el empleado (Inserción Atómica en Mongo)
                 _logger.Info($"Iniciando registro para {empleado.Nombre} en Mongo...");

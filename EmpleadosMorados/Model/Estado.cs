@@ -21,8 +21,8 @@ public class Estado
 
     // 💡 AÑADIDO: Propiedad auxiliar para capturar el ID cuando viene en formato 'id_estado'
     // (como en el subdocumento anidado de 'usuarios').
-    [BsonElement("id_estado")]
-    public string Id_Estado_Anidado { get; set; }
+    //[BsonElement("id_estado")]
+    //public string Id_Estado_Anidado { get; set; }
 
     public Estado() { }
 }
