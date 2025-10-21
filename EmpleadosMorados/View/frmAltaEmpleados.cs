@@ -236,9 +236,9 @@ namespace EmpleadosMorados.View
                     idPuesto,
                     idDepto);
 
-                if (id > 0)
+                if (id == 0)
                 {
-                    MessageBox.Show($"Empleado registrado: ID {id}. {mensaje}", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"Empleado registrado: {mensaje}", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LimpiarCampos();
                 }
                 else

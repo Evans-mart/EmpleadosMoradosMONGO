@@ -33,7 +33,7 @@ public class Empleado
     // NOTA: Los campos Puesto, Sueldo, etc. que tenías en Empleado
     // se han FUSIONADO en el objeto PuestoActual, que es una mejor práctica en Mongo.
     // Solo dejamos los campos que no están incrustados:
-    public int IdPersona { get; set; } // Propiedad que ya no se necesita en Mongo
+    //public int IdPersona { get; set; } // Propiedad que ya no se necesita en Mongo
     public DateTime FechaIngreso { get; set; } // Ya está en TrayectoriaLaboral
 
     // 🚀 INCORPORACIONES DE SUB-DOCUMENTOS (EMBEDDING) 🚀
