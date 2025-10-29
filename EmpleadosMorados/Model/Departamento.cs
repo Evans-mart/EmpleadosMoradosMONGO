@@ -17,10 +17,14 @@ public class Departamento
     // 💡 AÑADIDO: Propiedad auxiliar para capturar el ID cuando viene en el formato 'id_depto' 
     // (como en el subdocumento de tu JSON de ejemplo). 
     // Esto resuelve el conflicto del documento anidado.
+
+
     [BsonElement("id_depto")]
+    [BsonIgnoreIfNull]
     public string Id_Depto_Anidado { get; set; }
 
-    [BsonIgnoreIfNull]
+ 
     [BsonElement("estatus")]
+    [BsonIgnoreIfNull]
     public string Estatus { get; set; }
 }

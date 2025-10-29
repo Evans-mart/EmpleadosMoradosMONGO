@@ -213,12 +213,13 @@ namespace EmpleadosMorados.View
                     correos.Add(new Correo { Tipo = "SECUNDARIO", Correo_Electronico = txtCorreoSecundario.Text.Trim() });
                 }
 
+
                 // 4. Mapeo de Empleado
                 Empleado empleado = new Empleado
                 {
                     Nombre = txtNombre.Text.Trim(),
                     ApellidoPaterno = txtApPat.Text.Trim(),
-                    ApellidoMaterno = txtApMat.Text.Trim(),
+                    ApellidoMaterno = string.IsNullOrWhiteSpace(txtApMat.Text) ? null : txtApMat.Text.Trim(),
                     Curp = txtCURP.Text.Trim(),
                     Rfc = txtRFC.Text.Trim(),
                     Sexo = cboSexo.SelectedValue?.ToString() ?? "OTRO",

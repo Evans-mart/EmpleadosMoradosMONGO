@@ -10,8 +10,10 @@ public class Puesto
     public string Nom_Puesto { get; set; }
 
     [BsonElement("id_depto")]
+    [BsonIgnoreIfNull]
     public string Id_Depto { get; set; }
 
     [BsonElement("estatus")]
+    [BsonIgnoreIfNull]
     public string Estatus { get; set; }
 }

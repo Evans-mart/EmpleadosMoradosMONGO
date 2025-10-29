@@ -15,8 +15,10 @@ public class Empleado
     [BsonElement("nombre")]
     public string Nombre { get; set; }
     [BsonElement("apellido_pat")]
+    
     public string ApellidoPaterno { get; set; }
     [BsonElement("apellido_mat")]
+    [BsonIgnoreIfNull]
     public string ApellidoMaterno { get; set; }
     [BsonElement("curp")]
     public string Curp { get; set; }
