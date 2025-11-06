@@ -221,7 +221,7 @@ namespace EmpleadosMorados.View
                     ApellidoPaterno = txtApPat.Text.Trim(),
                     ApellidoMaterno = string.IsNullOrWhiteSpace(txtApMat.Text) ? null : txtApMat.Text.Trim(),
                     Curp = txtCURP.Text.Trim(),
-                    Rfc = txtRFC.Text.Trim(),
+                    Rfc =string.IsNullOrWhiteSpace(txtRFC.Text) ? null : txtRFC.Text.Trim(),
                     Sexo = cboSexo.SelectedValue?.ToString() ?? "OTRO",
                     Telefono = telefono, // Usamos la variable convertida
                     Estatus = "ACTIVO",

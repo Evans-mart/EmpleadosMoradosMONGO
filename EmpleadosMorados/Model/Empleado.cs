@@ -23,8 +23,10 @@ public class Empleado
     [BsonElement("curp")]
     public string Curp { get; set; }
     [BsonElement("rfc")]
+    [BsonIgnoreIfNull]
     public string Rfc { get; set; }
     [BsonElement("telefono")]
+    
     public long Telefono { get; set; } // Lo ponemos como long para que mapee el número de Mongo
     [BsonElement("sexo")]
     public string Sexo { get; set; }

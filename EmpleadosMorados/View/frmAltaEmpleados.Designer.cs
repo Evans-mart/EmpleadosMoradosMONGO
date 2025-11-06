@@ -694,9 +694,9 @@
             lblNoInt.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold);
             lblNoInt.Location = new Point(3, 0);
             lblNoInt.Name = "lblNoInt";
-            lblNoInt.Size = new Size(98, 23);
+            lblNoInt.Size = new Size(106, 23);
             lblNoInt.TabIndex = 0;
-            lblNoInt.Text = "No.Interior";
+            lblNoInt.Text = "No.Interior*";
             // 
             // panel10
             // 
@@ -723,9 +723,9 @@
             lblNoExt.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold);
             lblNoExt.Location = new Point(3, 0);
             lblNoExt.Name = "lblNoExt";
-            lblNoExt.Size = new Size(101, 23);
+            lblNoExt.Size = new Size(109, 23);
             lblNoExt.TabIndex = 0;
-            lblNoExt.Text = "No.Exterior";
+            lblNoExt.Text = "No.Exterior*";
             // 
             // panel11
             // 
