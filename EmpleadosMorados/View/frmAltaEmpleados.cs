@@ -255,30 +255,66 @@ namespace EmpleadosMorados.View
                 MessageBox.Show($"Error crítico en la aplicación: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        // --- Métodos Auxiliares (Limpieza y Validación) ---
+        
 
-        // ⚠️ REVISIÓN DE LA VALIDACIÓN PARA INCLUIR CAMPOS NUMÉRICOS NO VACÍOS
         private bool ValidarDatosFormulario()
         {
-            // Validación de combos
+            // --- 1. Validación de ComboBox (Todos son obligatorios) ---
+
+            // Verificamos si la selección de cualquiera de los combos es nula.
             if (cboSexo.SelectedValue == null || cboDepto.SelectedValue == null ||
-                cboEstado.SelectedValue == null || cboMunicipio.SelectedValue == null)
+                cboEstado.SelectedValue == null || cboMunicipio.SelectedValue == null ||
+                cboPuesto.SelectedValue == null) 
             {
                 MessageBox.Show("Seleccione una opción válida en todos los menús desplegables.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
-            // Validación de campos de texto obligatorios y numéricos
-            if (string.IsNullOrWhiteSpace(txtNombre.Text) || string.IsNullOrWhiteSpace(txtRFC.Text) ||
-                string.IsNullOrWhiteSpace(txtCorreoPrincipal.Text) || string.IsNullOrWhiteSpace(txtCalle.Text) ||
-                string.IsNullOrWhiteSpace(txtCP.Text) || string.IsNullOrWhiteSpace(txtTelefono.Text)) // 👈 CP y Teléfono deben ser validados como no vacíos
+            // --- 2. Validación de Campos de Texto Obligatorios ---
+
+            // Lista de campos de texto OBLIGATORIOS (excluyendo RFC, ApMat, NoInt, NoExt)
+
+            if (string.IsNullOrWhiteSpace(txtNombre.Text) ||
+                string.IsNullOrWhiteSpace(txtApPat.Text) ||       // Apellido Paterno
+                string.IsNullOrWhiteSpace(txtCURP.Text) ||        // CURP (Asumiendo que es obligatorio)
+                
+                string.IsNullOrWhiteSpace(txtCorreoPrincipal.Text) ||
+                string.IsNullOrWhiteSpace(txtCalle.Text) ||
+                string.IsNullOrWhiteSpace(txtColonia.Text) ||
+                string.IsNullOrWhiteSpace(txtCP.Text) ||
+                string.IsNullOrWhiteSpace(txtTelefono.Text))
             {
-                MessageBox.Show("Los campos obligatorios (incluyendo CP y Teléfono) deben llenarse.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Asegúrese de haber llenado todos los campos de texto obligatorios (marcados con *).", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+            // Verifica que la longitud del texto sea exactamente 10
+            if (txtTelefono.Text.Length != 10)
+            {
+                MessageBox.Show("El número de teléfono debe contener exactamente 10 dígitos.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
-            // Si pasan la validación de no vacíos, la conversión en GuardarEmpleadoAsync se encargará del formato.
+            // Verifica que la longitud del texto sea exactamente 5
+            if (txtCP.Text.Length != 5)
+            {
+                MessageBox.Show("El Código Postal debe contener exactamente 5 dígitos.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
 
+            // 1. Verificar si el correo principal contiene el símbolo '@'
+            if (!txtCorreoPrincipal.Text.Contains("@"))
+            {
+                MessageBox.Show("El campo 'Correo Principal' debe contener el símbolo '@'.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            // 2. Opcional: Verificar el correo secundario si es obligatorio y existe
+            if (!string.IsNullOrWhiteSpace(txtCorreoSecundario.Text) && !txtCorreoSecundario.Text.Contains("@"))
+            {
+                MessageBox.Show("El campo 'Correo Secundario' debe contener el símbolo '@' si se proporciona.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+            // Si todas las validaciones pasan
             return true;
         }
 
@@ -289,17 +325,20 @@ namespace EmpleadosMorados.View
             txtApMat.Text = string.Empty;
             txtCURP.Text = string.Empty;
             txtRFC.Text = string.Empty;
-            cboSexo.Text = string.Empty;
+            cboSexo.SelectedIndex = -1;
             txtCalle.Text = string.Empty;
             txtColonia.Text = string.Empty;
             txtCP.Text = string.Empty;
-            cboEstado.Text = string.Empty;
-            cboMunicipio.Text = string.Empty;
+            cboEstado.SelectedIndex = -1;
+            cboMunicipio.SelectedIndex = -1;
             txtCorreoPrincipal.Text = string.Empty;
             txtCorreoSecundario.Text = string.Empty;
             txtTelefono.Text = string.Empty;
-            cboDepto.Text = string.Empty;
-            cboPuesto.Text = string.Empty;
+            cboDepto.SelectedIndex = -1;
+            cboPuesto.SelectedIndex = -1;
+            txtNoExt.Text = string.Empty;
+            txtNoInt.Text = string.Empty;
+            //sexo, estado, municipio, depto puesto
             // ...
             //InicializaVentanaEmpleadoRegistro(); // La forma más simple de resetear combos y reestablecer estados
         }
@@ -326,6 +365,29 @@ namespace EmpleadosMorados.View
             PoblaGenero(); // Síncrono, OK
             await PoblaDepartamentosAsync(); // Usar la nueva versión asíncrona
             await PoblaEstadosAsync();
+        }
+
+        private void txtTelefono_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Verifica si la tecla presionada NO es un dígito (número).
+            if (!char.IsDigit(e.KeyChar) &&
+                e.KeyChar != (char)Keys.Back) // Permite la tecla 'Back' (borrar)
+            {
+                // Si no es un dígito ni la tecla Back, anula el evento.
+                // Esto evita que el carácter se muestre en el TextBox.
+                e.Handled = true;
+            }
+        }
+
+        private void txtCP_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Solo permite dígitos (números) y la tecla de retroceso (borrar).
+            if (!char.IsDigit(e.KeyChar) &&
+                e.KeyChar != (char)Keys.Back)
+            {
+                // Bloquea cualquier otra tecla presionada.
+                e.Handled = true;
+            }
         }
     }
 }

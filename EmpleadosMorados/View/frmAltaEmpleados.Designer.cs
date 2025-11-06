@@ -263,6 +263,7 @@
             // 
             // cboSexo
             // 
+            cboSexo.DropDownStyle = ComboBoxStyle.DropDownList;
             cboSexo.FlatStyle = FlatStyle.Flat;
             cboSexo.FormattingEnabled = true;
             cboSexo.Location = new Point(3, 30);
@@ -306,9 +307,9 @@
             lblRFC.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold);
             lblRFC.Location = new Point(3, 0);
             lblRFC.Name = "lblRFC";
-            lblRFC.Size = new Size(49, 23);
+            lblRFC.Size = new Size(41, 23);
             lblRFC.TabIndex = 0;
-            lblRFC.Text = "RFC*\r\n";
+            lblRFC.Text = "RFC";
             // 
             // v
             // 
@@ -452,13 +453,13 @@
             // txtTelefono
             // 
             txtTelefono.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold);
-            txtTelefono.ForeColor = Color.DarkGray;
+            txtTelefono.ForeColor = Color.Black;
             txtTelefono.Location = new Point(3, 26);
             txtTelefono.MaxLength = 10;
             txtTelefono.Name = "txtTelefono";
             txtTelefono.Size = new Size(326, 30);
             txtTelefono.TabIndex = 1;
-            txtTelefono.Text = "EJ: 7220001234";
+            txtTelefono.KeyPress += txtTelefono_KeyPress;
             // 
             // lblTelefono
             // 
@@ -558,6 +559,7 @@
             // 
             // cboMunicipio
             // 
+            cboMunicipio.DropDownStyle = ComboBoxStyle.DropDownList;
             cboMunicipio.FlatStyle = FlatStyle.Flat;
             cboMunicipio.FormattingEnabled = true;
             cboMunicipio.Location = new Point(3, 28);
@@ -587,6 +589,7 @@
             // 
             // cboEstado
             // 
+            cboEstado.DropDownStyle = ComboBoxStyle.DropDownList;
             cboEstado.FlatStyle = FlatStyle.Flat;
             cboEstado.FormattingEnabled = true;
             cboEstado.Location = new Point(3, 30);
@@ -652,6 +655,7 @@
             txtCP.Name = "txtCP";
             txtCP.Size = new Size(326, 30);
             txtCP.TabIndex = 1;
+            txtCP.KeyPress += txtCP_KeyPress;
             // 
             // lblCP
             // 
@@ -690,9 +694,9 @@
             lblNoInt.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold);
             lblNoInt.Location = new Point(3, 0);
             lblNoInt.Name = "lblNoInt";
-            lblNoInt.Size = new Size(106, 23);
+            lblNoInt.Size = new Size(98, 23);
             lblNoInt.TabIndex = 0;
-            lblNoInt.Text = "No.Interior*";
+            lblNoInt.Text = "No.Interior";
             // 
             // panel10
             // 
@@ -719,9 +723,9 @@
             lblNoExt.Font = new Font("Segoe UI", 10.2F, FontStyle.Bold);
             lblNoExt.Location = new Point(3, 0);
             lblNoExt.Name = "lblNoExt";
-            lblNoExt.Size = new Size(109, 23);
+            lblNoExt.Size = new Size(101, 23);
             lblNoExt.TabIndex = 0;
-            lblNoExt.Text = "No.Exterior*";
+            lblNoExt.Text = "No.Exterior";
             // 
             // panel11
             // 
@@ -776,6 +780,7 @@
             // 
             // cboPuesto
             // 
+            cboPuesto.DropDownStyle = ComboBoxStyle.DropDownList;
             cboPuesto.FlatStyle = FlatStyle.Flat;
             cboPuesto.FormattingEnabled = true;
             cboPuesto.Location = new Point(3, 28);
@@ -805,6 +810,7 @@
             // 
             // cboDepto
             // 
+            cboDepto.DropDownStyle = ComboBoxStyle.DropDownList;
             cboDepto.FlatStyle = FlatStyle.Flat;
             cboDepto.FormattingEnabled = true;
             cboDepto.Location = new Point(3, 28);
