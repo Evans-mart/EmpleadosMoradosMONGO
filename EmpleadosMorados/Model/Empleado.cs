@@ -23,7 +23,7 @@ public class Empleado
     [BsonElement("curp")]
     public string Curp { get; set; }
     [BsonElement("rfc")]
-    [BsonIgnoreIfNull]
+    
     public string Rfc { get; set; }
     [BsonElement("telefono")]
     

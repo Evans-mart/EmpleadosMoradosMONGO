@@ -111,11 +111,6 @@ namespace EmpleadosMorados.Utilities
         /// </summary>
         /// <param name="direccion">Dirección a validar</param>
         /// <returns>Retorna verdadero si la dirección es válida, falso en caso contrario</returns>
-        public static bool EsDireccionValida(string direccion)
-        {
-            string patron = @"^[A-Z][a-z]+(\s[A-Z][a-z]+)*$";
-            return Regex.IsMatch(direccion, patron);
-        }
 
     }
 }

@@ -200,8 +200,8 @@ namespace EmpleadosMorados.View
                 Domicilio domicilio = new Domicilio
                 {
                     Calle = txtCalle.Text.Trim(),
-                    NoExterior = txtNoExt.Text.Trim(),
-                    NoInterior = txtNoInt.Text.Trim(),
+                    NoExterior = string.IsNullOrWhiteSpace(txtNoExt.Text) ? null : txtNoExt.Text.Trim(),
+                    NoInterior = string.IsNullOrWhiteSpace(txtNoInt.Text) ? null : txtNoInt.Text.Trim(),
                     CodigoPostal = codigoPostal, // Usamos la variable convertida
                     Colonia = txtColonia.Text.Trim(),
                 };
