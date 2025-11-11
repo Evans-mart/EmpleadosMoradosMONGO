@@ -20,35 +20,6 @@ namespace EmpleadosMorados.Data
 
         public IMongoCollection<Empleado> Usuarios => _context.Usuarios; // Propiedad de acceso directo para PersonasDataAccess
 
-        // ... [El método InsertarUsuarioAsync y GetNextSequenceIdAsync están correctos, los omito por espacio]
-
-        // Método auxiliar para obtener el ID secuencial (Necesario si usas _id: 1, 2, 3, ...)
-        //private async Task<int> GetNextSequenceIdAsync()
-        //{
-        //    try
-        //    {
-        //        // 🔹 Usa la colección correcta (Empleados)
-        //        var sort = Builders<Empleado>.Sort.Descending(e => e.Id);
-
-        //        var lastEmpleado = await _context.Usuarios
-        //            .Find(FilterDefinition<Empleado>.Empty)
-        //            .Sort(sort)
-        //            .Limit(1)
-        //            .FirstOrDefaultAsync();
-
-        //        // 🔹 Si existe, suma 1; si no, empieza en 1
-        //        int nextId = lastEmpleado != null ? lastEmpleado.Id + 1 : 1;
-
-        //        Console.WriteLine($"➡️ Próximo ID generado: {nextId}");
-        //        return nextId;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"❌ Error en GetNextSequenceIdAsync: {ex.Message}");
-        //        _logger.Error(ex, "Error al obtener el siguiente ID secuencial en empleados.");
-        //        return -2;
-        //    }
-        //}
 
         public async Task<string> InsertarUsuarioAsync(Empleado nuevoEmpleado)
         {
@@ -93,6 +64,16 @@ namespace EmpleadosMorados.Data
             return departamentos;
         }
 
+        public async Task<List<string>> ObtenerDepartamentosActivosSoloIdAsync()
+        {
+            // Usamos 'Project' para pedirle a la BD que solo nos devuelva el campo 'Id_Depto'
+            var departamentosIDs = await _context.Departamentos
+                .Find(d => d.Estatus == "ACTIVO")
+                .Project(d => d.Id_Depto) // 👈 Proyectamos solo el ID
+                .ToListAsync();           // La lista resultante ya es de tipo List<string>
+
+            return departamentosIDs;
+        }
         public async Task<List<KeyValuePair<string, string>>> ObtenerEstadosActivosAsync()
         {
             // 1. Leer documentos completos

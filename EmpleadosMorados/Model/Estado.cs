@@ -10,9 +10,11 @@ public class Estado
     public string Id_Estado { get; set; }
 
     [BsonElement("nom_estado")]
+    [BsonIgnoreIfNull]
     public string Nombre_Estado { get; set; }
 
     [BsonElement("pais")]
+    [BsonIgnoreIfNull]
     public string Pais { get; set; }
 
     [BsonIgnoreIfNull]

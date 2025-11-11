@@ -74,9 +74,9 @@ namespace EmpleadosMorados.Controller
 
                 // ⚠️ MODIFICACIÓN DEL BLOQUE: Rellena el objeto PuestoActual ya existente
                 empleado.PuestoActual.Id_Puesto = puesto.Id_Puesto;
-                empleado.PuestoActual.Nombre_Puesto = puesto.Nom_Puesto;
+               // empleado.PuestoActual.Nombre_Puesto = puesto.Nom_Puesto;
                 empleado.PuestoActual.Departamento.Id_Depto = depto.Id_Depto;
-                empleado.PuestoActual.Departamento.Nombre_Depto = depto.Nombre_Depto;
+               // empleado.PuestoActual.Departamento.Nombre_Depto = depto.Nombre_Depto;
 
 
                 // ----------------------------------------------------------------------
@@ -94,8 +94,8 @@ namespace EmpleadosMorados.Controller
                 Estado estadoAnidado = new Estado
                 {
                     Id_Estado = estadoCat.Id_Estado,
-                    Nombre_Estado = estadoCat.Nombre_Estado,
-                    Pais = estadoCat.Pais
+                   // Nombre_Estado = estadoCat.Nombre_Estado,
+                  //  Pais = estadoCat.Pais
                 };
 
                 // 3. Creamos un nuevo objeto Municipio ANIDADO y limpio
@@ -103,7 +103,7 @@ namespace EmpleadosMorados.Controller
                 {
                     Id_Municipio = municipioCat.Id_Municipio,
                     // Usamos la propiedad 'Nombre_Municipio' para el anidado
-                    Nom_Municipio = municipioCat.Nom_Municipio,
+                    //Nom_Municipio = municipioCat.Nom_Municipio,
                     Estado = estadoAnidado // Anidamos el objeto estado limpio
                 };
 

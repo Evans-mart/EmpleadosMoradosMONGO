@@ -7,6 +7,7 @@ public class PuestoActual
     public string Id_Puesto { get; set; }
 
     [BsonElement("nombre_puesto")]
+    [BsonIgnoreIfNull]
     public string Nombre_Puesto { get; set; }
 
     // El error indica que el subdocumento DEPARTAMENTO falló. 

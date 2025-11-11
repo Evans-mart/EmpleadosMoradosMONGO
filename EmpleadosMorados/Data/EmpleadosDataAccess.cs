@@ -42,6 +42,5 @@ namespace EmpleadosMorados.Data
             return idGenerado;
         }
 
-        // ... (Deberás refactorizar todos los demás métodos de esta clase, como ObtenerEmpleado, etc.)
     }
 }

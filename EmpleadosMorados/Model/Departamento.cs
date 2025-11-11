@@ -12,6 +12,7 @@ public class Departamento
 
     // Mapeo del nombre.
     [BsonElement("nombre_depto")]
+    [BsonIgnoreIfNull]
     public string Nombre_Depto { get; set; }
 
     // 💡 AÑADIDO: Propiedad auxiliar para capturar el ID cuando viene en el formato 'id_depto' 

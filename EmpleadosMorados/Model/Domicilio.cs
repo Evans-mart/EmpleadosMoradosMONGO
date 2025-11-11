@@ -10,7 +10,7 @@ public class Domicilio
     [BsonElement("no_int")]
     public string NoInterior { get; set; }
     [BsonElement("cp")]
-    public int CodigoPostal { get; set; } // Lo cambiamos a int para que mapee el tipo BSON
+    public string CodigoPostal { get; set; } // Lo cambiamos a int para que mapee el tipo BSON
     [BsonElement("colonia")]
     public string Colonia { get; set; }
 

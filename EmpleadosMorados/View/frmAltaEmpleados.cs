@@ -170,23 +170,25 @@ namespace EmpleadosMorados.View
                 return;
             }
 
-            // Variables para la conversión segura
-            int codigoPostal;
-            long telefono;
+            //// Variables para la conversión segura
+            //int codigoPostal;
+            //long telefono;
 
-            // ⚠️ 1.1 Conversión Segura de CP
-            if (!int.TryParse(txtCP.Text.Trim(), out codigoPostal))
-            {
-                MessageBox.Show("El Código Postal (CP) debe ser un número entero válido.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+            //// ⚠️ 1.1 Conversión Segura de CP
+            //if (!int.TryParse(txtCP.Text.Trim(), out codigoPostal))
+            //{
+            //    MessageBox.Show("El Código Postal (CP) debe ser un número entero válido.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //    return;
+            //}
 
-            // ⚠️ 1.2 Conversión Segura de Teléfono
-            if (!long.TryParse(txtTelefono.Text.Trim(), out telefono))
-            {
-                MessageBox.Show("El Teléfono debe ser un número entero válido.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+            //// ⚠️ 1.2 Conversión Segura de Teléfono
+            //if (!long.TryParse(txtTelefono.Text.Trim(), out telefono))
+            //{
+            //    MessageBox.Show("El Teléfono debe ser un número entero válido.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //    return;
+            //}
+
+
 
             try
             {
@@ -202,7 +204,8 @@ namespace EmpleadosMorados.View
                     Calle = txtCalle.Text.Trim(),
                     NoExterior = string.IsNullOrWhiteSpace(txtNoExt.Text) ? null : txtNoExt.Text.Trim(),
                     NoInterior = string.IsNullOrWhiteSpace(txtNoInt.Text) ? null : txtNoInt.Text.Trim(),
-                    CodigoPostal = codigoPostal, // Usamos la variable convertida
+                    CodigoPostal = txtCP.Text.Trim(),
+
                     Colonia = txtColonia.Text.Trim(),
                 };
 
@@ -224,7 +227,7 @@ namespace EmpleadosMorados.View
                     Curp = txtCURP.Text.Trim(),
                     Rfc = txtRFC.Text.Trim(),
                     Sexo = cboSexo.SelectedValue?.ToString() ?? "OTRO",
-                    Telefono = telefono, // Usamos la variable convertida
+                    Telefono = txtTelefono.Text.Trim(), // Usamos la variable convertida
                     Estatus = "ACTIVO",
                     Domicilio = domicilio,
                     Correos = correos
