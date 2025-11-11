@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using EmpleadosMorados.Controller;
 using EmpleadosMorados.Model;
+using EmpleadosMorados.Utilities;
 using static System.Windows.Forms.DataFormats;
 
 namespace EmpleadosMorados.View
@@ -221,7 +222,7 @@ namespace EmpleadosMorados.View
                     ApellidoPaterno = txtApPat.Text.Trim(),
                     ApellidoMaterno = string.IsNullOrWhiteSpace(txtApMat.Text) ? null : txtApMat.Text.Trim(),
                     Curp = txtCURP.Text.Trim(),
-                    Rfc =string.IsNullOrWhiteSpace(txtRFC.Text) ? null : txtRFC.Text.Trim(),
+                    Rfc = txtRFC.Text.Trim(),
                     Sexo = cboSexo.SelectedValue?.ToString() ?? "OTRO",
                     Telefono = telefono, // Usamos la variable convertida
                     Estatus = "ACTIVO",
@@ -255,63 +256,73 @@ namespace EmpleadosMorados.View
                 MessageBox.Show($"Error crítico en la aplicación: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        
+
 
         private bool ValidarDatosFormulario()
         {
-            // --- 1. Validación de ComboBox (Todos son obligatorios) ---
-
-            // Verificamos si la selección de cualquiera de los combos es nula.
+            // --- 1. Validación de ComboBox (Esto se queda aquí, es lógica de la vista) ---
             if (cboSexo.SelectedValue == null || cboDepto.SelectedValue == null ||
                 cboEstado.SelectedValue == null || cboMunicipio.SelectedValue == null ||
-                cboPuesto.SelectedValue == null) 
+                cboPuesto.SelectedValue == null)
             {
                 MessageBox.Show("Seleccione una opción válida en todos los menús desplegables.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
             // --- 2. Validación de Campos de Texto Obligatorios ---
-
-            // Lista de campos de texto OBLIGATORIOS (excluyendo RFC, ApMat, NoInt, NoExt)
-
             if (string.IsNullOrWhiteSpace(txtNombre.Text) ||
-                string.IsNullOrWhiteSpace(txtApPat.Text) ||       // Apellido Paterno
-                string.IsNullOrWhiteSpace(txtCURP.Text) ||        // CURP (Asumiendo que es obligatorio)
-                
+                string.IsNullOrWhiteSpace(txtApPat.Text) ||
+                string.IsNullOrWhiteSpace(txtCURP.Text) ||
+                string.IsNullOrWhiteSpace(txtRFC.Text) ||
                 string.IsNullOrWhiteSpace(txtCorreoPrincipal.Text) ||
                 string.IsNullOrWhiteSpace(txtCalle.Text) ||
                 string.IsNullOrWhiteSpace(txtColonia.Text) ||
                 string.IsNullOrWhiteSpace(txtCP.Text) ||
                 string.IsNullOrWhiteSpace(txtTelefono.Text))
             {
-                MessageBox.Show("Asegúrese de haber llenado todos los campos de texto obligatorios (marcados con *).", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-            // Verifica que la longitud del texto sea exactamente 10
-            if (txtTelefono.Text.Length != 10)
-            {
-                MessageBox.Show("El número de teléfono debe contener exactamente 10 dígitos.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Asegúrese de haber llenado todos los campos obligatorios.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
-            // Verifica que la longitud del texto sea exactamente 5
-            if (txtCP.Text.Length != 5)
+            // --- 3. VALIDACIÓN DE FORMATOS (Aquí está la magia) ---
+            // Ahora llamamos a nuestra clase de Utilidades
+
+            if (!Validaciones.EsTelefonoValido(txtTelefono.Text.Trim()))
             {
-                MessageBox.Show("El Código Postal debe contener exactamente 5 dígitos.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("El número de teléfono debe contener exactamente 10 dígitos numéricos.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
-            // 1. Verificar si el correo principal contiene el símbolo '@'
-            if (!txtCorreoPrincipal.Text.Contains("@"))
+            if (!Validaciones.EsCPValido(txtCP.Text.Trim()))
             {
-                MessageBox.Show("El campo 'Correo Principal' debe contener el símbolo '@'.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("El Código Postal debe contener exactamente 5 dígitos numéricos.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
 
-            // 2. Opcional: Verificar el correo secundario si es obligatorio y existe
-            if (!string.IsNullOrWhiteSpace(txtCorreoSecundario.Text) && !txtCorreoSecundario.Text.Contains("@"))
+            if (!Validaciones.EsCorreoValido(txtCorreoPrincipal.Text.Trim()))
             {
-                MessageBox.Show("El campo 'Correo Secundario' debe contener el símbolo '@' si se proporciona.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("El formato del 'Correo Principal' no es válido.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            // Validar correo secundario si existe
+            if (!string.IsNullOrWhiteSpace(txtCorreoSecundario.Text) && !Validaciones.EsCorreoValido(txtCorreoSecundario.Text.Trim()))
+            {
+                MessageBox.Show("El formato del 'Correo Secundario' no es válido.", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            // Validar CURP (ya que tenemos el método)
+            if (!Validaciones.EsCURPValido(txtCURP.Text.Trim()))
+            {
+                MessageBox.Show("El formato del CURP no es válido (debe tener 18 caracteres, ej: AAAA010101HAAAAA01).", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            // Validar RFC (ya que tenemos el método)
+            if (!Validaciones.EsRFCValido(txtRFC.Text.Trim()))
+            {
+                MessageBox.Show("El formato del RFC no es válido (debe tener 13 caracteres, ej: AAAA010101H01).", "Error de Formato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
             // Si todas las validaciones pasan

@@ -1,64 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Linq; // Necesario para .All()
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace EmpleadosMorados.Utilities
 {
-    internal class Validaciones
+    public static class Validaciones
     {
         /// <summary>
         /// Valida si un correo electrónico es válido.
-        /// Ejemplos válidos: usuario@example.com, nombre.apellido@dominio.mx, empleado123@empresa.org
-        /// Ejemplos no válidos: usuario@@example.com (doble @), usuario.com (falta @), usuario@.com (falta dominio antes del punto)
         /// </summary>
-        /// <param name="correo">Correo electrónico a validar</param>
-        /// <returns>Retorna verdadero si el correo es válido, falso en caso contrario</returns>
         public static bool EsCorreoValido(string correo)
         {
+            if (string.IsNullOrWhiteSpace(correo)) return false;
             string patron = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
             return Regex.IsMatch(correo, patron);
         }
 
         /// <summary>
-        /// Valida si una CURP es válida.
-        /// Ejemplos válidos: GOML990101HDFRLR02, ROGA850505MDFLRS08
-        /// Ejemplos no válidos: goml990101hdfrrl02 (minúsculas no permitidas), GOML990101XDFRLR02 (X no es válido para el sexo), GOML990101HDFRL (falta longitud correcta)
+        /// Valida si una CURP es válida (Formato de 18 caracteres).
         /// </summary>
-        /// <param name="curp">CURP a validar</param>
-        /// <returns>Retorna verdadero si la CURP es válida, falso en caso contrario</returns>
         public static bool EsCURPValido(string curp)
         {
+            if (string.IsNullOrWhiteSpace(curp)) return false;
+            // 2. Tu patrón de CURP era bueno, pero le faltaban 2 caracteres al final.
+            // Este patrón valida las 18 posiciones.
             string patron = @"^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]{2}$";
-            return Regex.IsMatch(curp, patron);
-        }
-
-        /// <summary>
-        /// Valida si un número de teléfono es válido (10 dígitos).
-        /// Ejemplos válidos: 5512345678, 7229876543
-        /// Ejemplos no válidos: 123456789 (solo 9 dígitos), 55-1234-5678 (contiene guiones), telefono (contiene letras)
-        /// </summary>
-        /// <param name="telefono">Número de teléfono a validar</param>
-        /// <returns>Retorna verdadero si el teléfono es válido, falso en caso contrario</returns>
-        public static bool EsTelefonoValido(string telefono)
-        {
-            string patron = @"^\d{10}$";
-            return Regex.IsMatch(telefono, patron);
-        }
-
-        /// <summary>
-        /// Valida si un código postal es válido (5 dígitos).
-        /// Ejemplos válidos: 50120, 01000
-        /// Ejemplos no válidos: 5012 (menos de 5 dígitos), 501201 (más de 5 dígitos), ABCDE (contiene letras)
-        /// </summary>
-        /// <param name="cp">Código postal a validar</param>
-        /// <returns>Retorna verdadero si el código postal es válido, falso en caso contrario</returns>
-        public static bool EsCodigoPostalValido(string cp)
-        {
-            string patron = @"^\d{5}$";
-            return Regex.IsMatch(cp, patron);
+            return Regex.IsMatch(curp.ToUpper(), patron); // Usamos ToUpper()
         }
 
         /// <summary>
@@ -72,6 +39,43 @@ namespace EmpleadosMorados.Utilities
         {
             string patron = @"^[A-Z]{4}\d{6}[A-Z0-9]{3}$";
             return Regex.IsMatch(rfc, patron);
+        }
+
+
+        // --- 3. MÉTODOS NUEVOS QUE NECESITAS ---
+
+        /// <summary>
+        /// Valida si un número de teléfono es válido (exactamente 10 dígitos numéricos).
+        /// </summary>
+        public static bool EsTelefonoValido(string telefono)
+        {
+            if (string.IsNullOrWhiteSpace(telefono))
+                return false;
+
+            // Revisa dos cosas: que tenga 10 caracteres Y que todos sean números.
+            return telefono.Length == 10 && telefono.All(char.IsDigit);
+        }
+
+        /// <summary>
+        /// Valida si un Código Postal es válido (exactamente 5 dígitos numéricos).
+        /// </summary>
+        public static bool EsCPValido(string cp)
+        {
+            if (string.IsNullOrWhiteSpace(cp))
+                return false;
+
+            // Revisa dos cosas: que tenga 5 caracteres Y que todos sean números.
+            return cp.Length == 5 && cp.All(char.IsDigit);
+        }
+
+        /// <summary>
+        /// Valida si un texto contiene únicamente números (útil para KeyPress).
+        /// </summary>
+        public static bool EsSoloNumeros(string texto)
+        {
+            if (string.IsNullOrWhiteSpace(texto))
+                return true; // Un campo vacío no es "inválido"
+            return texto.All(char.IsDigit);
         }
 
         /// <summary>
@@ -112,48 +116,6 @@ namespace EmpleadosMorados.Utilities
             string patron = @"^[A-Z][a-z]+(\s[A-Z][a-z]+)*$";
             return Regex.IsMatch(direccion, patron);
         }
-
-        /// <summary>
-        /// Valida si un número es válido (Solo dígitos).
-        /// Ejemplos válidos: 123, 987654
-        /// Ejemplos no válidos: 123a (contiene letras), 1.23 (contiene punto decimal)
-        /// </summary>
-        /// <param name="numero">Número a validar</param>
-        /// <returns>Retorna verdadero si el número es válido, falso en caso contrario</returns>
-        public static bool EsNumeroValido(string numero)
-        {
-            string patron = @"^\d+$";
-            return Regex.IsMatch(numero, patron);
-        }
-
-        /// <summary>
-        /// Valida si un salario es válido (Solo números con hasta dos decimales).
-        /// Ejemplos válidos: 1500, 12345.67, 9999.9
-        /// Ejemplos no válidos: 1234.999 (más de dos decimales), salario (contiene letras), 12,345.67 (usa coma en lugar de punto)
-        /// </summary>
-        /// <param name="salario">Salario a validar</param>
-        /// <returns>Retorna verdadero si el salario es válido, falso en caso contrario</returns>
-        public static bool EsSalarioValido(string salario)
-        {
-            string patron = @"^\d+(\.\d{1,2})?$";
-            return Regex.IsMatch(salario, patron);
-        }
-        /// <summary>
-        /// Valida si una matrícula es válida según el formato específico.
-        /// La matrícula debe comenzar con "E-", seguido de 4 dígitos, un guion "-", 
-        /// y de 3 a 5 dígitos numéricos.
-        /// E-2019-54321
-        /// </summary>
-        /// <param name="matricula">Matrícula a validar.</param>
-        /// <returns>Retorna verdadero si la matrícula cumple con el formato especificado, falso en caso contrario.</returns>
-        internal static bool EsNoMatriculaValido(string matricula)
-        {
-            if (string.IsNullOrEmpty(matricula)) return false;
-
-            string patron = @"^E-\d{4}-\d{3,5}$";
-            return Regex.IsMatch(matricula.Trim(), patron);
-        }
-
 
     }
 }

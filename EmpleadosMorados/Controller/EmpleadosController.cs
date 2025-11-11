@@ -52,7 +52,7 @@ namespace EmpleadosMorados.Controller
 
                 // a) Trayectoria Laboral
                 empleado.TrayectoriaLaboral.Fecha_Alta = DateTime.Now;
-                empleado.TrayectoriaLaboral.Usr_Contrato = "NA-0000";
+                empleado.TrayectoriaLaboral.Usr_Contrato = "NA-0001";
 
                 // b) Correos: Aseguramos el mapeo del correo principal (FALTA EL CAMPO txtCorreoPrincipal en la vista para ser correcto)
                 // Asumo que tu vista se llama 'txtCorreoPrincipal' y 'txtCorreoSecundario'
@@ -110,13 +110,6 @@ namespace EmpleadosMorados.Controller
                 // 4. REEMPLAZAMOS el objeto 'Municipio' vacío del empleado por el objeto limpio
                 empleado.Domicilio.Municipio = municipioAnidado;
 
-                // ⚠️ MODIFICACIÓN DEL BLOQUE: Rellena los objetos Municipio y Estado ya existentes
-                //empleado.Domicilio.Municipio.Id_Municipio = municipioCat.Id_Municipio;
-                //empleado.Domicilio.Municipio.Nom_Municipio = municipioCat.Nom_Municipio;
-                //empleado.Domicilio.Municipio.Estado.Id_Estado = estadoCat.Id_Estado;
-                //empleado.Domicilio.Municipio.Estado.Nombre_Estado = estadoCat.Nombre_Estado;
-                //empleado.Domicilio.Municipio.Estado.Pais = estadoCat.Pais;
-                // ----------------------------------------------------------------------
                 // 3. Registrar el empleado (Inserción Atómica en Mongo)
                 _logger.Info($"Iniciando registro para {empleado.Nombre} en Mongo...");
                 String idGenerado = await _empleadosData.InsertarEmpleadoAsync(empleado);
